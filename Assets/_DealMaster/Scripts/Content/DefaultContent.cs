@@ -8,6 +8,8 @@ public static class DefaultContent
 {
     public const string ElectronicsSupplierId = "eletro_centro";
     public const string AccessoriesSupplierId = "casa_acessorios";
+    public const string WholesalerId = "atacado_bom_preco";
+    public const int WholesalerLevel = 6;
 
     public static readonly ProductInfo[] Products =
     {
@@ -69,10 +71,21 @@ public static class DefaultContent
         return s;
     }
 
+    /// <summary>Atacadista (nível 6): todos os produtos, mais baratos, com desconto por volume.</summary>
+    public static SupplierStock CreateWholesaler()
+    {
+        var s = new SupplierStock(WholesalerId, 7, 17, maxDiscount: 0.05f,
+            volumeDiscountMinQuantity: 10, volumeDiscount: 0.06f);
+        foreach (var p in Products)
+            s.AddCatalogItem(p.Id, (long)System.Math.Round(p.BaseCostCents * 0.85), 30, 15, WholesalerLevel);
+        return s;
+    }
+
     public static Dictionary<string, string> SupplierNames => new Dictionary<string, string>
     {
         [ElectronicsSupplierId] = "Eletro Centro",
-        [AccessoriesSupplierId] = "Casa dos Acessórios"
+        [AccessoriesSupplierId] = "Casa dos Acessórios",
+        [WholesalerId] = "Atacado Bom Preço"
     };
 
     private static void AddFromCatalog(SupplierStock s, string id, int stock, int restock)

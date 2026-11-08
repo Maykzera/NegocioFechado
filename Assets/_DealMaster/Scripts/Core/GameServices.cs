@@ -16,6 +16,9 @@ public static class GameServices
     public static PackagingService Packaging { get; private set; }
     public static FinanceLedger Ledger { get; private set; }
     public static SalesService Sales { get; private set; }
+    public static ProgressionService Progression { get; private set; }
+    public static MissionService Missions { get; private set; }
+    public static GameClock Clock { get; private set; }
 
     /// <summary>Nível do empreendedor. Controlado pelo sistema de progressão.</summary>
     public static Func<int> PlayerLevelProvider;
@@ -40,6 +43,14 @@ public static class GameServices
         Packaging = new PackagingService(wallet, inventory);
         Ledger = new FinanceLedger();
         Sales = new SalesService(wallet, inventory, Packaging, Ledger);
+        Progression = new ProgressionService();
+        Missions = new MissionService();
+        Clock = new GameClock();
+
+        PlayerLevelProvider = () => Progression.Level;
+        HourProvider = () => Clock.Hour;
+        Ledger.DayProvider = () => Clock.Day;
+        Sales.DayProvider = () => Clock.Day;
 
         Purchases.OnPurchaseCompleted += r => Ledger.Record(LedgerEntryType.Purchase, -r.TotalCents,
             $"Compra: {r.Quantity}x {ProductDatabase.NameOf(r.ProductId)} ({SupplierName(r.SupplierId)})");
@@ -68,6 +79,9 @@ public static class GameServices
         Packaging = null;
         Ledger = null;
         Sales = null;
+        Progression = null;
+        Missions = null;
+        Clock = null;
         PlayerLevelProvider = null;
         HourProvider = null;
         suppliers.Clear();

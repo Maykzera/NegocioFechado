@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>Painel financeiro: resumo, vendas, livro-caixa e reclamações a resolver.</summary>
 public class FinancePanel : IModalPanel
 {
-    private enum Tab { Summary, Sales, Ledger, Complaints }
+    private enum Tab { Progress, Summary, Sales, Ledger, Complaints }
 
     private Tab tab;
     private Vector2 scroll;
@@ -14,6 +14,7 @@ public class FinancePanel : IModalPanel
 
     public FinancePanel()
     {
+        tab = Tab.Progress;
         if (GameServices.Sales != null && GameServices.Sales.PendingComplaints().Any()) tab = Tab.Complaints;
     }
 
@@ -21,7 +22,7 @@ public class FinancePanel : IModalPanel
 
     public void DrawPanel(Rect area)
     {
-        string[] names = { "Resumo", "Vendas", "Caixa", "Reclamações" };
+        string[] names = { "Progresso", "Resumo", "Vendas", "Caixa", "Reclamações" };
         float w = area.width / names.Length;
         for (int i = 0; i < names.Length; i++)
             if (GUI.Button(new Rect(area.x + i * w, area.y, w - 6, 36), names[i], (int)tab == i ? UIStyles.Selected : UIStyles.Button))
@@ -30,12 +31,41 @@ public class FinancePanel : IModalPanel
         var body = new Rect(area.x, area.y + 46, area.width, area.height - 46);
         switch (tab)
         {
+            case Tab.Progress: DrawProgress(body); break;
             case Tab.Summary: DrawSummary(body); break;
             case Tab.Sales: DrawSales(body); break;
             case Tab.Ledger: DrawLedger(body); break;
             case Tab.Complaints: DrawComplaints(body); break;
         }
         if (message != null) GUI.Label(new Rect(area.x, area.yMax - 30, area.width, 30), message, UIStyles.Bad);
+    }
+
+    private static void DrawProgress(Rect r)
+    {
+        var p = GameServices.Progression;
+        GUI.Label(new Rect(r.x, r.y, r.width, 30), $"Nível {p.Level} · {p.Title}", UIStyles.Header);
+        UIStyles.Bar(new Rect(r.x, r.y + 36, r.width * 0.5f, 22), p.ProgressToNext, new Color(0.4f, 0.6f, 0.95f));
+        GUI.Label(new Rect(r.x + r.width * 0.5f + 10, r.y + 34, r.width * 0.5f, 26), $"{p.Xp} XP · faltam {p.XpToNext} para o nível {p.Level + 1}", UIStyles.Small);
+
+        float y = r.y + 72;
+        GUI.Label(new Rect(r.x, y, r.width * 0.5f, 26), "Missões", UIStyles.Header);
+        float ly = y + 30;
+        foreach (var m in GameServices.Missions.Missions)
+        {
+            string mark = m.Completed ? "✓" : m.Main ? "★" : "•";
+            GUI.Label(new Rect(r.x, ly, r.width * 0.55f, 46), $"{mark} <b>{m.Title}</b> (+{m.RewardXp} XP)\n{m.Description}", m.Completed ? UIStyles.Good : UIStyles.Small);
+            ly += 48;
+        }
+
+        float rx = r.x + r.width * 0.6f;
+        GUI.Label(new Rect(rx, y, r.width * 0.4f, 26), "Próximos desbloqueios", UIStyles.Header);
+        float ry = y + 30;
+        foreach (var u in ProgressionService.Unlocks)
+        {
+            bool got = p.Level >= u.Level;
+            GUI.Label(new Rect(rx, ry, r.width * 0.4f, 44), $"{(got ? "✓" : $"Nível {u.Level}:")} {u.Description}", got ? UIStyles.Good : UIStyles.Small);
+            ry += 46;
+        }
     }
 
     private static void DrawSummary(Rect r)

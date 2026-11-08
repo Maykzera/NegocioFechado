@@ -138,6 +138,9 @@ public static class DealMasterSceneBuilder
             new Color(0.6f, 0.62f, 0.55f), "ATACADO BOM PRECO", out var wholesaleDoor);
         wholesaleDoor.Locked = true;
         wholesaleDoor.LockedMessage = "Atacadista: disponível a partir do nível 6";
+        var gate = wholesaleDoor.gameObject.AddComponent<LevelGate>();
+        gate.RequiredLevel = DefaultContent.WholesalerLevel;
+        gate.PlaceName = "Atacadista";
 
         layout.Warehouse = WorldKit.Building("Deposito do Jogador", w, new Vector3(-16, 0, south), 180f, 12, 10,
             new Color(0.75f, 0.55f, 0.4f), "MEU DEPOSITO", out _);

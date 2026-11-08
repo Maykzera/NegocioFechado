@@ -27,6 +27,7 @@ public class GameBootstrap : MonoBehaviour
         GameServices.Initialize(wallet, inventory);
         GameServices.RegisterSupplier(DefaultContent.CreateElectronicsSupplier(), "Eletro Centro");
         GameServices.RegisterSupplier(DefaultContent.CreateAccessoriesSupplier(), "Casa dos Acessórios");
+        GameServices.RegisterSupplier(DefaultContent.CreateWholesaler(), "Atacado Bom Preço");
 
         Application.targetFrameRate = Application.isMobilePlatform ? 30 : targetFrameRate;
     }

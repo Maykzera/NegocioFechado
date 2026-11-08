@@ -10,7 +10,7 @@ Acompanhamento do cronograma técnico do projeto mestre.
 | 4. NPCs | Clientes andando, perfis e negociação | ✅ |
 | 5. Vendas | Pagamento, entrega e pós-venda | ✅ |
 | 6. Mestre | Histórico, avaliação e feedback | ✅ |
-| 7. Progressão | XP, níveis, desbloqueios, missões e relógio | ⏳ |
+| 7. Progressão | XP, níveis, desbloqueios, missões e relógio | ✅ |
 | 8. Finalização | Salvamento, qualidade gráfica e builds | ⏳ |
 
 ## Etapa 1 — Fundação
@@ -90,3 +90,17 @@ Acompanhamento do cronograma técnico do projeto mestre.
 - **Problemas que ele aponta:** desconto excessivo, prejuízo, mentiras (o mestre sempre vê, mesmo quando o cliente não percebe), pressão, oportunidade perdida, dúvidas sem resposta, entrega sem embalagem e embalagem fraca.
 - **Sugestões:** saem dos 3 critérios mais fracos.
 - **Escritório do mestre:** o Mestre Otávio, na mesa dele (`MentorDesk`), analisa as negociações pendentes uma a uma. A tela (`MentorPanel`) mostra a nota, as barras dos critérios, as observações e um **histórico com gráfico de evolução**.
+
+## Etapa 7 — Progressão
+
+- **XP** por ações comerciais válidas: compra, embalagem (proporcional à qualidade), venda (proporcional ao lucro) e avaliação do mestre (proporcional à nota). Não há XP por clique repetido.
+- **Níveis** com os títulos do projeto: Vendedor iniciante (1–5), Revendedor profissional (6–10), Empreendedor (11–20), Empresário (21–30) e Magnata comercial (31+).
+- **Desbloqueios:**
+  - mochila de 14 itens (nível 2) e de 20 itens (nível 5);
+  - depósito de 100 itens e bancada maior (nível 3);
+  - 30 pedidos prontos ao mesmo tempo (nível 4);
+  - **Atacado Bom Preço (nível 6)**, com todos os produtos 15% mais baratos, desconto por volume e o Seu Antônio no balcão;
+  - depósito de 200 itens (nível 8).
+- **8 missões**, incluindo a principal, ★ **"Negócio fechado"**: fazer uma venda lucrativa e obter a aprovação do mestre.
+- **Relógio do jogo:** o expediente vai das 8h às 22h (cerca de 7 minutos reais). As lojas têm horário de funcionamento, o sol se move e os postes acendem à noite. No **fim do dia**, é cobrado o aluguel do depósito (R$ 20), os fornecedores reabastecem e aparece um resumo do dia.
+- **Painel (F) → aba Progresso:** mostra nível, barra de XP, missões e desbloqueios.

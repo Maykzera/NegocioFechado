@@ -14,6 +14,9 @@ public static class CommerceSceneSetup
     {
         Counter(layout.ElectronicsShop, DefaultContent.ElectronicsSupplierId, "Seu Jorge", new Color(0.2f, 0.35f, 0.6f));
         Counter(layout.AccessoriesShop, DefaultContent.AccessoriesSupplierId, "Dona Célia", new Color(0.7f, 0.3f, 0.35f));
+        Counter(layout.Wholesaler, DefaultContent.WholesalerId, "Seu Antônio", new Color(0.3f, 0.5f, 0.3f));
+        WorldKit.Shelf("Estoque Atacado 1", layout.Wholesaler, new Vector3(-5f, 0, 3.8f), 0f, new Color(0.72f, 0.56f, 0.36f));
+        WorldKit.Shelf("Estoque Atacado 2", layout.Wholesaler, new Vector3(5f, 0, 3.8f), 0f, new Color(0.72f, 0.56f, 0.36f));
 
         // Depósito: estantes de estoque com ponto de interação
         var shelf = WorldKit.Shelf("Estante do Estoque", layout.Warehouse, new Vector3(-4f, 0, 3.6f), 0f, new Color(0.65f, 0.5f, 0.3f));
