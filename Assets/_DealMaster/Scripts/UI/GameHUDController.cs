@@ -119,11 +119,31 @@ public class GameHUDController : MonoBehaviour
 /// <summary>Linhas extras de status no HUD, preenchidas pelos sistemas das próximas etapas.</summary>
 public static class HUDExtensions
 {
-    public static System.Func<string> StatusText;
+    private static readonly System.Collections.Generic.List<System.Func<string>> providers =
+        new System.Collections.Generic.List<System.Func<string>>();
+
+    public static event System.Func<string> StatusText
+    {
+        add { if (value != null) providers.Add(value); }
+        remove { providers.Remove(value); }
+    }
+
+    public static string Compose()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var p in providers)
+        {
+            string line = p();
+            if (string.IsNullOrEmpty(line)) continue;
+            if (sb.Length > 0) sb.Append('\n');
+            sb.Append(line);
+        }
+        return sb.ToString();
+    }
 
     public static void DrawStatusLines(Rect area, GUIStyle style)
     {
-        string text = StatusText?.Invoke();
+        string text = Compose();
         if (!string.IsNullOrEmpty(text)) GUI.Label(area, text, style);
     }
 }

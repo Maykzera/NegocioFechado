@@ -5,7 +5,7 @@ Acompanhamento do cronograma técnico do projeto mestre.
 | Etapa | Entrega | Status |
 |---|---|---|
 | 1. Fundação | Controles PC/Android, interação, portas, HUD, cena gerada por script | ✅ |
-| 2. Comércio | Produtos, fornecedores, compra, inventário e depósito | ⏳ |
+| 2. Comércio | Produtos, fornecedores, compra, inventário e depósito | ✅ |
 | 3. Embalagem | Bancada, caixas, proteção, fita e etiqueta | ⏳ |
 | 4. NPCs | Clientes andando, perfis e negociação | ⏳ |
 | 5. Vendas | Pagamento, entrega e pós-venda | ⏳ |
@@ -26,3 +26,14 @@ Acompanhamento do cronograma técnico do projeto mestre.
 - **Interação:** `InteractionController` usa um raycast pelo centro da tela e a interface `IInteractable`.
 - **Portas:** `Door` abre e fecha e pode ser trancada.
 - **Interface:** `GameUI` e `GameHUDController` controlam o HUD (dinheiro, mira, texto de interação, avisos) e as telas modais. A UI é IMGUI com escala automática, igual em PC e Android.
+
+## Etapa 2 — Comércio
+
+- **10 produtos** (`DefaultContent`), cada um com custo, preço de mercado, fragilidade, qualidade, tamanho de caixa, argumentos verdadeiros e exageros. Nenhuma caneta.
+- **2 fornecedores:**
+  - Eletro Centro, com o Seu Jorge: fone, caixa de som, carregador, power bank e mouse;
+  - Casa dos Acessórios, com a Dona Célia: capinha, película, suporte veicular, garrafa térmica e luminária.
+- **Tela de compra (`ShopPanel`):** catálogo, quantidade, desconto por volume e pechincha (até 3 tentativas, com contraproposta do vendedor), além de horário de funcionamento e nível exigido.
+- **Mochila (Tab):** mostra os produtos carregados, a capacidade e o custo médio.
+- **Depósito:** a estante do estoque abre a transferência entre mochila e depósito.
+- **`ProductDefinition`:** novos produtos podem ser criados como ScriptableObject e adicionados no `GameBootstrap`.

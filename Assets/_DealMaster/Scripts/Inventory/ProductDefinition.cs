@@ -29,6 +29,19 @@ public class ProductDefinition : ScriptableObject
 
     [Min(1)] public int requiredLevel = 1;
 
+    [Range(0, 1)] public float quality = 0.6f;
+    public BoxSize boxSize = BoxSize.Small;
+
+    [Tooltip("Argumentos verdadeiros que o jogador pode usar na venda.")]
+    public string[] benefits = new string[0];
+
+    [Tooltip("Exageros (falsos). O mestre detecta.")]
+    public string[] exaggerations = new string[0];
+
     public GameObject worldPrefab;
     public Sprite icon;
+
+    public ProductInfo ToInfo() => new ProductInfo(
+        productId, productName, category, baseCostCents, referencePriceCents,
+        weightKg, fragility, quality, boxSize, requiredLevel, benefits, exaggerations);
 }

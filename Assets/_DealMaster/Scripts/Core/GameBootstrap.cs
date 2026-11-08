@@ -10,13 +10,23 @@ public class GameBootstrap : MonoBehaviour
     [SerializeField] private int benchCapacity = 4;
     [SerializeField] private int targetFrameRate = 60;
 
+    [Tooltip("Produtos extras criados como ScriptableObject (opcional). Os 10 produtos padrão são sempre carregados.")]
+    [SerializeField] private ProductDefinition[] extraProducts = new ProductDefinition[0];
+
     private void Awake()
     {
         if (wallet == null) wallet = GetComponent<WalletService>();
         if (wallet == null) wallet = gameObject.AddComponent<WalletService>();
 
         var inventory = new InventoryService(backpackCapacity, warehouseCapacity, benchCapacity);
+        ProductDatabase.Clear();
+        DefaultContent.RegisterProducts();
+        foreach (var p in extraProducts)
+            if (p != null) ProductDatabase.Register(p.ToInfo());
+
         GameServices.Initialize(wallet, inventory);
+        GameServices.RegisterSupplier(DefaultContent.CreateElectronicsSupplier(), "Eletro Centro");
+        GameServices.RegisterSupplier(DefaultContent.CreateAccessoriesSupplier(), "Casa dos Acessórios");
 
         Application.targetFrameRate = Application.isMobilePlatform ? 30 : targetFrameRate;
     }
