@@ -224,6 +224,15 @@ public sealed class CustomerBrain
         PatienceLeft = tuning.Patience;
     }
 
+    /// <summary>
+    /// Aplica a memória de encontros anteriores: clientes bem atendidos voltam com mais confiança,
+    /// clientes que tiveram problemas voltam desconfiados.
+    /// </summary>
+    public void ApplyRelationship(float trustDelta)
+    {
+        profile.trust = Clamp01(profile.trust + trustDelta);
+    }
+
     // ------------------------------------------------------------------ ações do jogador
 
     public CustomerResponse Greet()

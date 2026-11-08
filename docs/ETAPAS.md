@@ -7,7 +7,7 @@ Acompanhamento do cronograma técnico do projeto mestre.
 | 1. Fundação | Controles PC/Android, interação, portas, HUD, cena gerada por script | ✅ |
 | 2. Comércio | Produtos, fornecedores, compra, inventário e depósito | ✅ |
 | 3. Embalagem | Bancada, caixas, proteção, fita e etiqueta | ✅ |
-| 4. NPCs | Clientes andando, perfis e negociação | ⏳ |
+| 4. NPCs | Clientes andando, perfis e negociação | ✅ |
 | 5. Vendas | Pagamento, entrega e pós-venda | ⏳ |
 | 6. Mestre | Histórico, avaliação e feedback | ⏳ |
 | 7. Progressão | XP, níveis, desbloqueios, missões e relógio | ⏳ |
@@ -52,3 +52,14 @@ Acompanhamento do cronograma técnico do projeto mestre.
   9. ver a nota e confirmar.
 - **`PackagingEvaluator`:** dá a nota de proteção, integridade, tamanho, apresentação, uso de material e tempo, calcula o custo dos materiais e o **risco de avaria na entrega**.
 - **`PackagingService`:** cobra os materiais e move a unidade para "pedidos prontos". A operação é tudo ou nada.
+
+## Etapa 4 — NPCs
+
+- **`CustomerSpawner`:** mantém até 6 clientes no PC e 4 no Android, cada um com nome, um dos 5 perfis e uma necessidade sorteada entre os produtos liberados no seu nível.
+- **`CustomerAgent`:** o cliente anda entre pontos da praça e das calçadas, para e olha para o jogador durante a conversa e vai embora quando a negociação termina.
+- **Negociação (`NegotiationPanel`):**
+  - barras de **confiança, interesse e paciência**;
+  - histórico da conversa;
+  - ações: cumprimentar, perguntar o que procura, apresentar produto (embalado ou da mochila), argumentos verdadeiros misturados com exageros, responder dúvida, pressionar, propor preço, aceitar a contraproposta, aguardar o indeciso e encerrar.
+- **`CustomerMemory`:** o cliente lembra compras, reclamações, saídas insatisfeitas e mentiras descobertas. Isso muda a confiança inicial e a saudação no próximo encontro.
+- **`NegotiationHooks`:** liga a negociação ao sistema de vendas (Etapa 5) e ao mestre (Etapa 6).
