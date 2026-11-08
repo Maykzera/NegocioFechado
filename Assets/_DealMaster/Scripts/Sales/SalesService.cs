@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>Uma venda concluída.</summary>
+[Serializable]
 public sealed class SaleRecord
 {
     public int SaleId;

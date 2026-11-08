@@ -92,6 +92,12 @@ public class FinancePanel : IModalPanel
         Line("Fluxo de caixa", CustomerBrain.FormatReais(ledger.CashFlow), ledger.CashFlow >= 0 ? UIStyles.Good : UIStyles.Bad);
         Line("Vendas realizadas", sales.Sales.Count.ToString(), UIStyles.Text);
         Line("Reputação", $"{sales.Reputation:0}/100", UIStyles.Text);
+
+        if (SaveGameBridge.Instance != null)
+        {
+            if (GUI.Button(new Rect(r.x, y + 10, 240, 44), "Salvar agora", UIStyles.Button)) SaveGameBridge.Instance.SaveNow();
+            GUI.Label(new Rect(r.x + 250, y + 18, r.width - 250, 30), "O jogo também salva sozinho no fim de cada dia.", UIStyles.Small);
+        }
     }
 
     private void DrawSales(Rect r)

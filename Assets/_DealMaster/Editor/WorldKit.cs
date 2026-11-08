@@ -84,6 +84,7 @@ public static class WorldKit
         tm.characterSize = size;
         tm.fontSize = 64;
         tm.color = color;
+        TextMeshUtil.ApplyFont(tm);
         return tm;
     }
 

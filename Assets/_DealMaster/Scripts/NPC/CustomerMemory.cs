@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>O que um cliente lembra das experiências com o jogador.</summary>
+[Serializable]
 public sealed class CustomerRecord
 {
     public string Name;

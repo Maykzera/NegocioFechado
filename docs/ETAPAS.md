@@ -11,7 +11,7 @@ Acompanhamento do cronograma técnico do projeto mestre.
 | 5. Vendas | Pagamento, entrega e pós-venda | ✅ |
 | 6. Mestre | Histórico, avaliação e feedback | ✅ |
 | 7. Progressão | XP, níveis, desbloqueios, missões e relógio | ✅ |
-| 8. Finalização | Salvamento, qualidade gráfica e builds | ⏳ |
+| 8. Finalização | Salvamento, qualidade gráfica e builds | ✅ |
 
 ## Etapa 1 — Fundação
 
@@ -104,3 +104,19 @@ Acompanhamento do cronograma técnico do projeto mestre.
 - **8 missões**, incluindo a principal, ★ **"Negócio fechado"**: fazer uma venda lucrativa e obter a aprovação do mestre.
 - **Relógio do jogo:** o expediente vai das 8h às 22h (cerca de 7 minutos reais). As lojas têm horário de funcionamento, o sol se move e os postes acendem à noite. No **fim do dia**, é cobrado o aluguel do depósito (R$ 20), os fornecedores reabastecem e aparece um resumo do dia.
 - **Painel (F) → aba Progresso:** mostra nível, barra de XP, missões e desbloqueios.
+
+## Etapa 8 — Finalização
+
+- **Salvamento (`SaveGameService` + `SaveGameBridge`):**
+  - formato JSON versionado (v2), com **escrita atômica** (arquivo temporário + troca);
+  - **cópia de segurança** do salvamento anterior; se o principal estiver corrompido, o jogo carrega o backup;
+  - validação e **migração** de versões antigas;
+  - salva dinheiro, XP, dia e hora, reputação, estoque com custo exato, pedidos embalados, vendas, livro-caixa, fornecedores, avaliações do mestre, negociações pendentes, memória dos clientes, missões e posição do jogador;
+  - salva sozinho no fim de cada dia e ao pausar ou sair. Também há o botão "Salvar agora" no painel.
+- **Menu inicial:** continuar, novo jogo e "Como jogar" (tutorial com os controles de PC e celular).
+- **Qualidade por plataforma (`PlatformQuality`):** no Android, qualidade baixa, sombras curtas, 30 FPS, resolução a 85% e tela sempre ligada. No PC, qualidade máxima e 60 FPS.
+- **Sons (`AudioFeedback`):** gerados por código para compra, embalagem, venda, avaria e subida de nível.
+- **Build (`DealMasterBuild`):**
+  - menus `DealMaster > Configurar projeto`, `Build Windows` e `Build Android (APK)`;
+  - Android em ARM64 com IL2CPP e tela deitada;
+  - também funciona em linha de comando com `-executeMethod`.

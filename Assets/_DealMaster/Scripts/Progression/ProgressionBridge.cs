@@ -48,7 +48,8 @@ public class ProgressionBridge : MonoBehaviour
 
     private void Update()
     {
-        GameServices.Clock.Paused = GameUI.IsModalOpen && GameUI.Current is MentorPanel;
+        // O tempo corre durante compras e negociações, mas para no menu inicial e na sala do mestre.
+        GameServices.Clock.Paused = GameUI.IsModalOpen && (GameUI.Current is MentorPanel || GameUI.Current is StartMenuPanel);
         GameServices.Clock.Advance(Time.deltaTime);
     }
 

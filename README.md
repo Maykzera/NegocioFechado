@@ -1,44 +1,103 @@
 # Negócio Fechado — DealMaster: Business Simulator
 
-Simulador 3D realista de comércio e negociação (Unity 6 · PC Windows e Android).
+Simulador 3D de comércio e negociação em primeira pessoa (Unity 6 · PC Windows e Android).
 
-O jogador começa com pouco dinheiro, compra mercadorias em lojas e fornecedores, embala os pedidos à mão, procura clientes, negocia de verdade e no fim passa pela avaliação de um **mestre negociador** que analisa toda a negociação. Não existe golpe como mecânica principal: o desafio é vender honestamente, convencer clientes, administrar o estoque e lucrar.
+Você começa com **R$ 1.500** e um depósito. Compra mercadorias nas lojas da cidade, **embala os pedidos à mão** na bancada, procura clientes na praça e **negocia de verdade**. Não existe botão "Vender": é preciso entender o que o cliente quer, argumentar, responder dúvidas e chegar a um preço. No fim, o **Mestre Negociador** analisa cada negociação e dá uma nota justificada.
 
-## Ciclo do jogo
+## Como abrir e jogar
 
-1. **Comprar mercadorias:** visitar lojas, atacadistas e fornecedores em um mundo 3D, comparar preços, examinar produtos, negociar descontos e comprar estoque com dinheiro limitado.
-2. **Preparar e embalar:** conferir, limpar, proteger e embalar cada produto usando caixas, fita adesiva, etiquetas e materiais de proteção.
-3. **Procurar clientes e negociar:** conversar com NPCs de personalidades, necessidades e orçamentos diferentes; apresentar argumentos, responder objeções e fechar vendas.
-4. **Avaliação do mestre:** um mentor analisa a negociação completa (persuasão, honestidade, margem de lucro, atendimento e satisfação do cliente) e dá uma nota justificada.
-5. **Reinvestir** os lucros e liberar novos fornecedores, produtos e negócios.
+1. Instale o **Unity 6 LTS** pelo Unity Hub, com os módulos *Windows Build Support (IL2CPP)* e *Android Build Support*.
+2. No Unity Hub: **New project → Universal 3D (URP)**.
+3. Copie a pasta `Assets/_DealMaster` deste repositório para dentro da pasta `Assets/` do projeto novo.
+4. No Unity, use o menu **DealMaster → Configurar projeto**. Se ele avisar que mudou o *Active Input Handling*, reinicie o Unity.
+5. Use o menu **DealMaster → Construir cena da Vertical Slice**. A cidade inteira é criada em `Scenes/CommercialDistrict.unity`.
+6. Aperte **Play**.
 
-O jogador não deve simplesmente clicar em "Vender". Ele precisa aprender a vender de verdade, e cada negociação deve ser uma experiência diferente.
+### Controles
+
+| | PC | Celular |
+|---|---|---|
+| Mover | WASD (Shift corre, C agacha) | Joystick à esquerda |
+| Olhar | Mouse | Arrastar à direita |
+| Interagir | E ou clique | Botão "Interagir" |
+| Mochila | Tab | Botão "Mochila" |
+| Painel (progresso, finanças, reclamações) | F | Botão "Painel" |
+| Soltar cursor / fechar tela | Esc | — |
+
+### O ciclo do jogo
+
+1. **Comprar:** na *Eletro Centro* (Seu Jorge) ou na *Casa dos Acessórios* (Dona Célia). Dá para pechinchar.
+2. **Guardar:** no seu depósito, do outro lado da rua, a estante guarda o estoque.
+3. **Embalar:** na bancada, inspecione, escolha a caixa, arraste o produto, proteja, passe a fita arrastando, etiquete e confirme. Embalagem ruim aumenta o risco de avaria.
+4. **Vender:** converse com os clientes na praça e nas calçadas. Cada um tem perfil, necessidade, orçamento, confiança e paciência.
+5. **Mestre:** no escritório do Mestre Otávio, receba a nota de 0 a 10 de cada negociação, com observações e sugestões.
+6. **Evoluir:** ganhe XP, suba de nível, amplie o estoque e libere o *Atacado Bom Preço* no nível 6.
+
+**Missão principal:** fazer uma venda lucrativa e ser aprovado pelo mestre (nota 7 ou mais).
+
+## Testes
+
+No Unity: **Window → General → Test Runner → EditMode → Run All**. São 81 testes cobrindo:
+- economia e estoque;
+- fornecedores e compras;
+- clientes e negociação;
+- embalagem;
+- vendas e pós-venda;
+- mestre;
+- progressão, missões e relógio;
+- salvamento.
+
+A lógica do jogo é separada da cena, então os testes rodam sem abrir o jogo.
+
+## Gerar os executáveis
+
+- **Windows:** `DealMaster → Build Windows` gera `Builds/Windows/DealMaster.exe`.
+- **Android:** `DealMaster → Build Android (APK)` gera `Builds/Android/DealMaster.apk`.
+
+Linha de comando (CI):
+
+```bash
+Unity -batchmode -quit -projectPath <projeto> -executeMethod DealMasterBuild.BuildWindows
+Unity -batchmode -quit -projectPath <projeto> -executeMethod DealMasterBuild.BuildAndroid
+```
 
 ## Documentação
 
 | Documento | Conteúdo |
 |---|---|
-| [`docs/PROJETO_MESTRE.md`](docs/PROJETO_MESTRE.md) | Conceito, arquitetura, scripts, progressão, vertical slice, cronograma e regras |
-| [`docs/PROMPT_MESTRE.md`](docs/PROMPT_MESTRE.md) | Prompt mestre completo para uma IA desenvolvedora com acesso ao projeto Unity |
-| [`docs/simulador-negociacao.html`](docs/simulador-negociacao.html) | Exemplo interativo de negociação (abra no navegador) |
+| [`docs/ETAPAS.md`](docs/ETAPAS.md) | O que foi feito em cada uma das 8 etapas |
+| [`docs/PROJETO_MESTRE.md`](docs/PROJETO_MESTRE.md) | Conceito, arquitetura, progressão, cronograma e regras |
+| [`docs/PROMPT_MESTRE.md`](docs/PROMPT_MESTRE.md) | Prompt mestre original |
+| [`docs/simulador-negociacao.html`](docs/simulador-negociacao.html) | Exemplo interativo de negociação |
 
-## Estado atual
+## Estrutura do código
 
-- ✅ Estrutura de pastas Unity (`Assets/_DealMaster/`)
-- ✅ Produtos e carteira: `ProductDefinition`, `WalletService` (+ interface `IWallet`)
-- ✅ Estoque: `InventoryService`: mochila, depósito, bancada e pedido, com capacidade, reservas, custo médio, transferências atômicas e histórico
-- ✅ Fornecedores: `SupplierDefinition` (ScriptableObject) e `SupplierStock`: catálogo, horário, estoque, reposição, desconto por volume e relacionamento
-- ✅ Compras: `PurchaseService`: negociação de preço com o fornecedor (aceita, contraproposta ou recusa) e compra validada, em que dinheiro e estoque mudam juntos ou nada muda
-- ✅ Clientes: `CustomerBrain`: 5 perfis (econômico, exigente, indeciso, apressado, desconfiado), com necessidade, orçamento, confiança, paciência, contrapropostas, pedido de tempo, detecção de mentiras e memória de eventos para o mestre
-- ✅ 35 testes automatizados (EditMode) em `Assets/_DealMaster/Tests/EditMode`
-- ⏳ Ainda faltam: cenas, prefabs, `SalesService`, embalagem, `MentorEvaluator`, progressão, salvamento, interface e builds. Ainda não existe executável.
+```text
+Assets/_DealMaster/
+├── Scripts/            (assembly DealMaster)
+│   ├── Core/           GameBootstrap, GameServices, qualidade por plataforma
+│   ├── Player/         movimento, input PC/touch, interação
+│   ├── World/          portas, utilitários
+│   ├── Content/        produtos e fornecedores padrão
+│   ├── Economy/        carteira e livro-caixa
+│   ├── Inventory/      estoque, mochila, depósito
+│   ├── Suppliers/      fornecedores, compra e pechincha
+│   ├── Packaging/      avaliação e minigame de embalagem
+│   ├── NPC/            cérebro, memória, agentes e spawner de clientes
+│   ├── Negotiation/    motor e tela de negociação
+│   ├── Sales/          vendas, pós-venda, painel financeiro
+│   ├── Mentor/         avaliador, histórico e escritório do mestre
+│   ├── Progression/    XP, níveis, missões, relógio, dia/noite
+│   ├── Persistence/    salvamento versionado
+│   ├── Audio/          sons gerados por código
+│   └── UI/             HUD, telas, menu inicial
+├── Editor/             construtor da cena e builds
+└── Tests/EditMode/     testes automatizados
+```
 
-## Testes
+## Limitações atuais (honestas)
 
-No Unity: **Window → General → Test Runner → EditMode → Run All**. A lógica de domínio não depende de cena, então os testes rodam sem abrir o jogo.
-
-## Como abrir
-
-1. Instale o **Unity 6 LTS** com os módulos *Windows Build Support* e *Android Build Support*.
-2. Crie um projeto **Universal 3D (URP)** novo e copie a pasta `Assets/_DealMaster` para dentro dele (ou abra esta pasta como projeto pelo Unity Hub, e o Unity gera o `ProjectSettings/`).
-3. Instale pelo Package Manager: *Input System*, *AI Navigation* e *Test Framework*.
+- **Visual de protótipo:** prédios, móveis, produtos e personagens são formas simples (placeholders). A lógica toda funciona, e os modelos 3D definitivos podem substituir as formas sem mexer no código.
+- **Interface simples:** a UI é IMGUI, funcional e com escala para celular, mas visualmente simples. Pode ser trocada por UI Toolkit.
+- **Personagens:** os clientes andam em linha reta entre pontos (sem NavMesh) e não têm animação.
+- **Verificação:** o código foi compilado contra os assemblies do Unity 2021 e os testes rodaram fora do editor. **Ainda não foi aberto no Unity 6 de verdade**, então pode haver avisos ou pequenos ajustes de API na primeira abertura.

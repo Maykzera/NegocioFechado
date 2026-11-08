@@ -251,6 +251,24 @@ public sealed class InventoryService
         return true;
     }
 
+    /// <summary>Esvazia todos os locais (usado ao carregar um jogo salvo).</summary>
+    public void Clear()
+    {
+        foreach (var location in stacks.Values) location.Clear();
+        history.Clear();
+    }
+
+    /// <summary>Restaura uma pilha salva, com o custo total exato. Reservas não são salvas.</summary>
+    public bool RestoreStack(StorageLocation location, string productId, int quantity, long totalCostCents)
+    {
+        if (string.IsNullOrEmpty(productId) || quantity <= 0 || totalCostCents < 0) return false;
+        if (GetUsedUnits(location) + quantity > capacities[location]) capacities[location] = GetUsedUnits(location) + quantity;
+        var stack = GetOrCreate(location, productId);
+        stack.Quantity += quantity;
+        stack.TotalCostCents += totalCostCents;
+        return true;
+    }
+
     /// <summary>Valor total do estoque (custo de aquisição) em todos os locais.</summary>
     public long GetTotalStockValueCents()
     {

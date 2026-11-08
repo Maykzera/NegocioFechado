@@ -146,6 +146,14 @@ public sealed class SupplierStock
         Relationship = Clamp01(Relationship + amount);
     }
 
+    /// <summary>Restaura estoque e relacionamento de um jogo salvo.</summary>
+    public void RestoreState(float relationship, IEnumerable<KeyValuePair<string, int>> stocks)
+    {
+        Relationship = Clamp01(relationship);
+        foreach (var kv in stocks)
+            if (items.TryGetValue(kv.Key, out var i)) i.Stock = Math.Max(0, Math.Min(i.MaxStock, kv.Value));
+    }
+
     /// <summary>Reposição diária de estoque, até o estoque máximo de cada item.</summary>
     public void Restock()
     {

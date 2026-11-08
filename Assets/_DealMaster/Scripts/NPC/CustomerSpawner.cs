@@ -100,6 +100,7 @@ public class CustomerSpawner : MonoBehaviour
         tm.anchor = TextAnchor.MiddleCenter;
         tm.characterSize = 0.035f;
         tm.fontSize = 64;
+        TextMeshUtil.ApplyFont(tm);
         label.AddComponent<FaceCamera>();
         return root;
     }
