@@ -17,6 +17,7 @@ public class PlayerInputReader : MonoBehaviour
     public bool CrouchPressed { get; private set; }
     public bool InteractPressed { get; private set; }
     public bool InventoryPressed { get; private set; }
+    public bool MenuPressed { get; private set; }
 
     /// <summary>Quando uma tela (loja, negociação, embalagem) está aberta, o personagem não se move.</summary>
     public bool Blocked => GameUI.IsModalOpen;
@@ -35,8 +36,13 @@ public class PlayerInputReader : MonoBehaviour
         InteractPressed = false;
         InventoryPressed = Input.GetKeyDown(KeyCode.Tab) || Input.GetKeyDown(KeyCode.I);
 
+        MenuPressed = Input.GetKeyDown(KeyCode.F);
+
         if (touchControls != null && touchControls.IsActive)
+        {
             InventoryPressed |= touchControls.ConsumeInventory();
+            MenuPressed |= touchControls.ConsumeMenu();
+        }
 
         if (Blocked)
         {

@@ -171,7 +171,6 @@ public class ShopPanel : IModalPanel
             case PurchaseResult.Success:
                 clerkLine = "Obrigado! Volte sempre.";
                 GameUI.Toast($"Comprou {receipt.Quantity}x {ProductDatabase.NameOf(receipt.ProductId)} por {CustomerBrain.FormatReais(receipt.TotalCents)}");
-                PurchaseLog.Record(receipt);
                 agreedUnitPrice = 0;
                 haggleAttempts = 0;
                 break;
@@ -186,23 +185,4 @@ public class ShopPanel : IModalPanel
 
     public static string BoxName(BoxSize size) =>
         size == BoxSize.Small ? "pequena" : size == BoxSize.Medium ? "média" : "grande";
-}
-
-/// <summary>Histórico de compras da sessão (usado no painel financeiro e no salvamento).</summary>
-public static class PurchaseLog
-{
-    private static readonly System.Collections.Generic.List<PurchaseReceipt> receipts =
-        new System.Collections.Generic.List<PurchaseReceipt>();
-
-    public static System.Collections.Generic.IReadOnlyList<PurchaseReceipt> Receipts => receipts;
-
-    public static event System.Action<PurchaseReceipt> OnRecorded;
-
-    public static void Record(PurchaseReceipt receipt)
-    {
-        receipts.Add(receipt);
-        OnRecorded?.Invoke(receipt);
-    }
-
-    public static void Clear() => receipts.Clear();
 }

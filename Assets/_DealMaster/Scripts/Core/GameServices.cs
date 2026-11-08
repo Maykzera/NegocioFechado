@@ -14,6 +14,8 @@ public static class GameServices
     public static InventoryService Inventory { get; private set; }
     public static PurchaseService Purchases { get; private set; }
     public static PackagingService Packaging { get; private set; }
+    public static FinanceLedger Ledger { get; private set; }
+    public static SalesService Sales { get; private set; }
 
     /// <summary>Nível do empreendedor. Controlado pelo sistema de progressão.</summary>
     public static Func<int> PlayerLevelProvider;
@@ -36,6 +38,13 @@ public static class GameServices
         Inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         Purchases = new PurchaseService(wallet, inventory);
         Packaging = new PackagingService(wallet, inventory);
+        Ledger = new FinanceLedger();
+        Sales = new SalesService(wallet, inventory, Packaging, Ledger);
+
+        Purchases.OnPurchaseCompleted += r => Ledger.Record(LedgerEntryType.Purchase, -r.TotalCents,
+            $"Compra: {r.Quantity}x {ProductDatabase.NameOf(r.ProductId)} ({SupplierName(r.SupplierId)})");
+        Packaging.OnPacked += o => Ledger.Record(LedgerEntryType.PackagingMaterials, -o.Score.MaterialsCostCents,
+            $"Embalagem {o.OrderId}: {ProductDatabase.NameOf(o.ProductId)}");
         OnReady?.Invoke();
     }
 
@@ -57,6 +66,8 @@ public static class GameServices
         Inventory = null;
         Purchases = null;
         Packaging = null;
+        Ledger = null;
+        Sales = null;
         PlayerLevelProvider = null;
         HourProvider = null;
         suppliers.Clear();

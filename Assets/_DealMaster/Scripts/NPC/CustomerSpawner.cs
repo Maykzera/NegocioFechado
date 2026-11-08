@@ -62,6 +62,7 @@ public class CustomerSpawner : MonoBehaviour
 
         var brain = new CustomerBrain(name, archetype, wanted.Category, wanted.ReferencePriceCents, customerSeed);
         brain.ApplyRelationship(Memory.TrustBonus(name));
+        if (GameServices.Sales != null) brain.ApplyRelationship((GameServices.Sales.Reputation - 50f) / 400f);
 
         Vector3 start = spawnPoints[rng.Next(spawnPoints.Length)].position;
         Vector3 exit = spawnPoints[rng.Next(spawnPoints.Length)].position;

@@ -18,6 +18,7 @@ public class TouchControls : MonoBehaviour
     private bool interactQueued;
     private bool crouchQueued;
     private bool inventoryQueued;
+    private bool menuQueued;
 
     public bool IsActive => forceEnable || Application.isMobilePlatform;
     public Vector2 MoveVector { get; private set; }
@@ -26,11 +27,13 @@ public class TouchControls : MonoBehaviour
     public bool ConsumeInteract() { bool v = interactQueued; interactQueued = false; return v; }
     public bool ConsumeCrouch() { bool v = crouchQueued; crouchQueued = false; return v; }
     public bool ConsumeInventory() { bool v = inventoryQueued; inventoryQueued = false; return v; }
+    public bool ConsumeMenu() { bool v = menuQueued; menuQueued = false; return v; }
 
     // Botões em coordenadas de tela (origem no canto inferior esquerdo, como Input.touches).
     private Rect InteractButton => new Rect(Screen.width - Scale(190), Scale(150), Scale(150), Scale(150));
     private Rect CrouchButton => new Rect(Screen.width - Scale(330), Scale(60), Scale(110), Scale(110));
     private Rect InventoryButton => new Rect(Screen.width - Scale(130), Screen.height - Scale(130), Scale(100), Scale(100));
+    private Rect MenuButton => new Rect(Screen.width - Scale(250), Screen.height - Scale(130), Scale(100), Scale(100));
 
     private static float Scale(float v) => v * Screen.height / 1080f;
 
@@ -49,6 +52,7 @@ public class TouchControls : MonoBehaviour
                     if (InteractButton.Contains(t.position)) { interactQueued = true; break; }
                     if (CrouchButton.Contains(t.position)) { crouchQueued = true; break; }
                     if (InventoryButton.Contains(t.position)) { inventoryQueued = true; break; }
+                    if (MenuButton.Contains(t.position)) { menuQueued = true; break; }
 
                     if (t.position.x < Screen.width * 0.4f && moveFingerId < 0)
                     {
@@ -103,6 +107,7 @@ public class TouchControls : MonoBehaviour
         GUI.Box(ToGuiRect(InteractButton), "Interagir", style);
         GUI.Box(ToGuiRect(CrouchButton), "Agachar", style);
         GUI.Box(ToGuiRect(InventoryButton), "Mochila", style);
+        GUI.Box(ToGuiRect(MenuButton), "Painel", style);
         GUI.color = old;
     }
 

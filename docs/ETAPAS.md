@@ -8,7 +8,7 @@ Acompanhamento do cronograma técnico do projeto mestre.
 | 2. Comércio | Produtos, fornecedores, compra, inventário e depósito | ✅ |
 | 3. Embalagem | Bancada, caixas, proteção, fita e etiqueta | ✅ |
 | 4. NPCs | Clientes andando, perfis e negociação | ✅ |
-| 5. Vendas | Pagamento, entrega e pós-venda | ⏳ |
+| 5. Vendas | Pagamento, entrega e pós-venda | ✅ |
 | 6. Mestre | Histórico, avaliação e feedback | ⏳ |
 | 7. Progressão | XP, níveis, desbloqueios, missões e relógio | ⏳ |
 | 8. Finalização | Salvamento, qualidade gráfica e builds | ⏳ |
@@ -63,3 +63,14 @@ Acompanhamento do cronograma técnico do projeto mestre.
   - ações: cumprimentar, perguntar o que procura, apresentar produto (embalado ou da mochila), argumentos verdadeiros misturados com exageros, responder dúvida, pressionar, propor preço, aceitar a contraproposta, aguardar o indeciso e encerrar.
 - **`CustomerMemory`:** o cliente lembra compras, reclamações, saídas insatisfeitas e mentiras descobertas. Isso muda a confiança inicial e a saudação no próximo encontro.
 - **`NegotiationHooks`:** liga a negociação ao sistema de vendas (Etapa 5) e ao mestre (Etapa 6).
+
+## Etapa 5 — Vendas
+
+- **`SalesService`:** é o único caminho pelo qual uma venda mexe em dinheiro e estoque.
+  - Tira o pedido embalado (ou o item da mochila, sem embalagem) e recebe o pagamento menos a **taxa da maquininha de 2%**.
+  - Na entrega, o produto pode chegar **avariado**, conforme o risco calculado na embalagem. Sem embalagem, o risco é bem maior.
+  - Calcula o lucro direto de cada venda: preço − taxa − custo − embalagem − reembolsos.
+- **Pós-venda:** reclamações de produto avariado podem ser resolvidas com reembolso total, reembolso de metade ou recusa. Cada opção afeta a **reputação** e a memória do cliente.
+- **Reputação (0 a 100):** sobe com entregas boas e cai com avarias e recusas. Muda a confiança inicial dos novos clientes.
+- **`FinanceLedger`:** livro-caixa com todas as compras, embalagens, vendas, taxas e reembolsos. Calcula receita, compras, despesas e fluxo de caixa.
+- **Painel do negócio (F, ou botão "Painel" no celular):** abas de resumo, vendas, caixa e reclamações.

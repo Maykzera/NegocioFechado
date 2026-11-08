@@ -18,15 +18,28 @@ public class PlayerMenus : MonoBehaviour
 
     private void Update()
     {
-        if (input == null || !input.InventoryPressed) return;
-        if (GameUI.Current is InventoryPanel) GameUI.Close();
-        else if (!GameUI.IsModalOpen) GameUI.Open(new InventoryPanel());
+        if (input == null) return;
+        if (input.InventoryPressed) Toggle<InventoryPanel>(() => new InventoryPanel());
+        if (input.MenuPressed) Toggle<FinancePanel>(() => new FinancePanel());
+    }
+
+    private static void Toggle<T>(System.Func<IModalPanel> create) where T : IModalPanel
+    {
+        if (GameUI.Current is T) GameUI.Close();
+        else if (!GameUI.IsModalOpen) GameUI.Open(create());
     }
 
     private static string Status()
     {
         if (!GameServices.IsReady) return null;
         var inv = GameServices.Inventory;
-        return $"Mochila {inv.GetUsedUnits(StorageLocation.Backpack)}/{inv.GetCapacity(StorageLocation.Backpack)}";
+        string line = $"Mochila {inv.GetUsedUnits(StorageLocation.Backpack)}/{inv.GetCapacity(StorageLocation.Backpack)}  ·  Pedidos prontos {inv.GetUsedUnits(StorageLocation.Order)}";
+        if (GameServices.Sales != null)
+        {
+            line += $"\nReputação {GameServices.Sales.Reputation:0}";
+            int complaints = System.Linq.Enumerable.Count(GameServices.Sales.PendingComplaints());
+            if (complaints > 0) line += $"  ·  <color=#ff8a80>{complaints} reclamação(ões) [F]</color>";
+        }
+        return line;
     }
 }
