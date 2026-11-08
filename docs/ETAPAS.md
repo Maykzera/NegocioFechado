@@ -9,7 +9,7 @@ Acompanhamento do cronograma técnico do projeto mestre.
 | 3. Embalagem | Bancada, caixas, proteção, fita e etiqueta | ✅ |
 | 4. NPCs | Clientes andando, perfis e negociação | ✅ |
 | 5. Vendas | Pagamento, entrega e pós-venda | ✅ |
-| 6. Mestre | Histórico, avaliação e feedback | ⏳ |
+| 6. Mestre | Histórico, avaliação e feedback | ✅ |
 | 7. Progressão | XP, níveis, desbloqueios, missões e relógio | ⏳ |
 | 8. Finalização | Salvamento, qualidade gráfica e builds | ⏳ |
 
@@ -74,3 +74,19 @@ Acompanhamento do cronograma técnico do projeto mestre.
 - **Reputação (0 a 100):** sobe com entregas boas e cai com avarias e recusas. Muda a confiança inicial dos novos clientes.
 - **`FinanceLedger`:** livro-caixa com todas as compras, embalagens, vendas, taxas e reembolsos. Calcula receita, compras, despesas e fluxo de caixa.
 - **Painel do negócio (F, ou botão "Painel" no celular):** abas de resumo, vendas, caixa e reclamações.
+
+## Etapa 6 — Mestre
+
+- **`MentorEvaluator`** dá uma nota de 0 a 10 a partir do registro estruturado da negociação. É **determinístico**: o mesmo histórico, na mesma versão do avaliador, gera sempre a mesma nota. Os 9 critérios são os do projeto mestre:
+  - necessidade;
+  - conhecimento do produto;
+  - clareza;
+  - objeções;
+  - estratégia de preço;
+  - margem;
+  - transparência;
+  - satisfação;
+  - resultado.
+- **Problemas que ele aponta:** desconto excessivo, prejuízo, mentiras (o mestre sempre vê, mesmo quando o cliente não percebe), pressão, oportunidade perdida, dúvidas sem resposta, entrega sem embalagem e embalagem fraca.
+- **Sugestões:** saem dos 3 critérios mais fracos.
+- **Escritório do mestre:** o Mestre Otávio, na mesa dele (`MentorDesk`), analisa as negociações pendentes uma a uma. A tela (`MentorPanel`) mostra a nota, as barras dos critérios, as observações e um **histórico com gráfico de evolução**.
