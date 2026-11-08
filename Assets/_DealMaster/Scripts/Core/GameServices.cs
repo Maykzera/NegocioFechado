@@ -13,6 +13,7 @@ public static class GameServices
     public static IWallet Wallet { get; private set; }
     public static InventoryService Inventory { get; private set; }
     public static PurchaseService Purchases { get; private set; }
+    public static PackagingService Packaging { get; private set; }
 
     /// <summary>Nível do empreendedor. Controlado pelo sistema de progressão.</summary>
     public static Func<int> PlayerLevelProvider;
@@ -34,6 +35,7 @@ public static class GameServices
         Wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
         Inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
         Purchases = new PurchaseService(wallet, inventory);
+        Packaging = new PackagingService(wallet, inventory);
         OnReady?.Invoke();
     }
 
@@ -54,6 +56,7 @@ public static class GameServices
         Wallet = null;
         Inventory = null;
         Purchases = null;
+        Packaging = null;
         PlayerLevelProvider = null;
         HourProvider = null;
         suppliers.Clear();
