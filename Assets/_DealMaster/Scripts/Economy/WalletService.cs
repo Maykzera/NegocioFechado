@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class WalletService : MonoBehaviour
+public class WalletService : MonoBehaviour, IWallet
 {
     [SerializeField]
     private long startingBalanceCents = 150000;

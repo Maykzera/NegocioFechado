@@ -25,11 +25,20 @@ O jogador não deve simplesmente clicar em "Vender". Ele precisa aprender a vend
 ## Estado atual
 
 - ✅ Estrutura de pastas Unity (`Assets/_DealMaster/`)
-- ✅ Scripts base: `ProductDefinition.cs`, `WalletService.cs`, `NegotiationEngine.cs`
-- ⏳ Cenas, prefabs, demais serviços, testes e builds ainda não foram criados. Ainda não existe projeto Unity compilado nem executável.
+- ✅ Produtos e carteira: `ProductDefinition`, `WalletService` (+ interface `IWallet`)
+- ✅ Estoque: `InventoryService`: mochila, depósito, bancada e pedido, com capacidade, reservas, custo médio, transferências atômicas e histórico
+- ✅ Fornecedores: `SupplierDefinition` (ScriptableObject) e `SupplierStock`: catálogo, horário, estoque, reposição, desconto por volume e relacionamento
+- ✅ Compras: `PurchaseService`: negociação de preço com o fornecedor (aceita, contraproposta ou recusa) e compra validada, em que dinheiro e estoque mudam juntos ou nada muda
+- ✅ Clientes: `CustomerBrain`: 5 perfis (econômico, exigente, indeciso, apressado, desconfiado), com necessidade, orçamento, confiança, paciência, contrapropostas, pedido de tempo, detecção de mentiras e memória de eventos para o mestre
+- ✅ 35 testes automatizados (EditMode) em `Assets/_DealMaster/Tests/EditMode`
+- ⏳ Ainda faltam: cenas, prefabs, `SalesService`, embalagem, `MentorEvaluator`, progressão, salvamento, interface e builds. Ainda não existe executável.
+
+## Testes
+
+No Unity: **Window → General → Test Runner → EditMode → Run All**. A lógica de domínio não depende de cena, então os testes rodam sem abrir o jogo.
 
 ## Como abrir
 
 1. Instale o **Unity 6 LTS** com os módulos *Windows Build Support* e *Android Build Support*.
 2. Crie um projeto **Universal 3D (URP)** novo e copie a pasta `Assets/_DealMaster` para dentro dele (ou abra esta pasta como projeto pelo Unity Hub, e o Unity gera o `ProjectSettings/`).
-3. Instale pelo Package Manager: *Input System* e *AI Navigation*.
+3. Instale pelo Package Manager: *Input System*, *AI Navigation* e *Test Framework*.
