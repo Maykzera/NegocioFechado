@@ -97,6 +97,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>Inclina a câmera (positivo = olhar para baixo).</summary>
+    public void SetPitch(float degrees)
+    {
+        pitch = Mathf.Clamp(degrees, minPitch, maxPitch);
+        if (cameraPivot != null) cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+    }
+
     /// <summary>Teleporta o jogador (ao carregar um jogo salvo, por exemplo).</summary>
     public void Teleport(Vector3 position, float yaw)
     {

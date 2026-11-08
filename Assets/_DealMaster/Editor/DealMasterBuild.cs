@@ -32,6 +32,10 @@ public static class DealMasterBuild
 
         SetActiveInputHandlingBoth();
 
+        // A IA de verdade usa a internet; no Android a permissão precisa ser forçada.
+        PlayerSettings.Android.forceInternetPermission = true;
+        ConfigureAnthropicDefine();
+
         if (!File.Exists(DealMasterSceneBuilder.ScenePath)) DealMasterSceneBuilder.Build();
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(DealMasterSceneBuilder.ScenePath, true) };
         AssetDatabase.SaveAssets();
@@ -67,6 +71,33 @@ public static class DealMasterBuild
             Debug.LogError($"[DealMaster] Build falhou: {report.summary.result} ({report.summary.totalErrors} erros)");
 
         if (Application.isBatchMode) EditorApplication.Exit(report.summary.result == BuildResult.Succeeded ? 0 : 1);
+    }
+
+    public const string AnthropicDefine = "DEALMASTER_ANTHROPIC_SDK";
+
+    /// <summary>
+    /// Liga a IA de verdade quando o SDK oficial da Anthropic está no projeto (instalado pelo NuGetForUnity),
+    /// e desliga quando não está, para o projeto sempre compilar.
+    /// </summary>
+    [MenuItem("DealMaster/Detectar SDK da IA (Anthropic)", priority = 21)]
+    public static void ConfigureAnthropicDefine()
+    {
+        bool installed = false;
+        foreach (var guid in AssetDatabase.FindAssets("Anthropic"))
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            if (path.EndsWith("/Anthropic.dll", System.StringComparison.OrdinalIgnoreCase)) { installed = true; break; }
+        }
+        foreach (var group in new[] { BuildTargetGroup.Standalone, BuildTargetGroup.Android })
+        {
+            var defines = new System.Collections.Generic.List<string>(PlayerSettings.GetScriptingDefineSymbolsForGroup(group).Split(';'));
+            defines.RemoveAll(d => string.IsNullOrWhiteSpace(d) || d == AnthropicDefine);
+            if (installed) defines.Add(AnthropicDefine);
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", defines));
+        }
+        Debug.Log(installed
+            ? "[DealMaster] SDK da Anthropic encontrado: IA de verdade ativada. Coloque sua chave no computador do jogo (Configurações)."
+            : "[DealMaster] SDK da Anthropic não encontrado: o jogo usa o cliente offline. Instale o pacote 'Anthropic' pelo NuGetForUnity para ativar a IA.");
     }
 
     /// <summary>

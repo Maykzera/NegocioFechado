@@ -51,8 +51,6 @@ public class TouchControls : MonoBehaviour
                 case TouchPhase.Began:
                     if (InteractButton.Contains(t.position)) { interactQueued = true; break; }
                     if (CrouchButton.Contains(t.position)) { crouchQueued = true; break; }
-                    if (InventoryButton.Contains(t.position)) { inventoryQueued = true; break; }
-                    if (MenuButton.Contains(t.position)) { menuQueued = true; break; }
 
                     if (t.position.x < Screen.width * 0.4f && moveFingerId < 0)
                     {
@@ -106,8 +104,6 @@ public class TouchControls : MonoBehaviour
         var style = new GUIStyle(GUI.skin.box) { fontSize = Mathf.RoundToInt(Scale(30)), alignment = TextAnchor.MiddleCenter };
         GUI.Box(ToGuiRect(InteractButton), "Interagir", style);
         GUI.Box(ToGuiRect(CrouchButton), "Agachar", style);
-        GUI.Box(ToGuiRect(InventoryButton), "Mochila", style);
-        GUI.Box(ToGuiRect(MenuButton), "Painel", style);
         GUI.color = old;
     }
 

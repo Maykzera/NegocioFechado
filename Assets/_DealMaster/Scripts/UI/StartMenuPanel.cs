@@ -7,59 +7,49 @@ public class StartMenuPanel : IModalPanel
 
     private bool showHelp;
 
-    public string Title => "DealMaster — Negócio Fechado";
+    public string Title => "Negócio Fechado · Central de Vendas";
 
-    public StartMenuPanel()
-    {
-        IsShowing = true;
-    }
+    public StartMenuPanel() { IsShowing = true; }
 
-    public void OnClosed()
-    {
-        IsShowing = false;
-    }
+    public void OnClosed() { IsShowing = false; }
 
     public void DrawPanel(Rect area)
     {
         if (showHelp) { DrawHelp(area); return; }
 
-        GUI.Label(new Rect(area.x, area.y, area.width, 80),
-            "Você começa com R$ 1.500 e um depósito. Compre mercadorias, embale com capricho, negocie de verdade com os clientes e mostre ao Mestre Negociador que sabe vender.",
-            UIStyles.Text);
+        GUI.Label(new Rect(area.x, area.y, area.width, 110),
+            $"Seu primeiro dia na <b>{CallCenterGame.CompanyName}</b>. Sente na sua mesa, ligue para os clientes e converse de verdade: " +
+            "descubra o que cada pessoa precisa, apresente o serviço certo e convença sem mentir. A Supervisora Regina ouve suas ligações " +
+            "e venda feita com mentira é cancelada.", UIStyles.Text);
 
-        float y = area.y + 100;
+        float y = area.y + 120;
         bool hasSave = SaveGameBridge.Service.HasSave;
         GUI.enabled = hasSave;
-        if (GUI.Button(new Rect(area.x, y, 320, 54), "Continuar", UIStyles.Button))
-        {
+        if (GUI.Button(new Rect(area.x, y, 340, 54), "Continuar", UIStyles.Button))
             if (SaveGameBridge.Instance != null && SaveGameBridge.Instance.LoadSaved()) GameUI.Close();
-        }
         GUI.enabled = true;
         y += 64;
-        if (GUI.Button(new Rect(area.x, y, 320, 54), hasSave ? "Novo jogo (apaga o salvo)" : "Novo jogo", UIStyles.Button))
+        if (GUI.Button(new Rect(area.x, y, 340, 54), hasSave ? "Novo jogo (apaga o salvo)" : "Começar o expediente", UIStyles.Button))
         {
             if (hasSave && SaveGameBridge.Instance != null) SaveGameBridge.Instance.NewGame();
-            else
-            {
-                GameUI.Close();
-                GameUI.Toast("Missão principal: faça uma venda lucrativa e seja aprovado pelo mestre.", 6f);
-            }
+            else { GameUI.Close(); GameUI.Toast("Sua mesa tem a placa SUA MESA. Sente lá e abra o Discador.", 6f); }
         }
         y += 64;
-        if (GUI.Button(new Rect(area.x, y, 320, 54), "Como jogar", UIStyles.Button)) showHelp = true;
+        if (GUI.Button(new Rect(area.x, y, 340, 54), "Como jogar", UIStyles.Button)) showHelp = true;
+        y += 70;
+        GUI.Label(new Rect(area.x, y, area.width, 50), ClaudeAvailability.Status(GameServices.AI ?? new AISettings()), UIStyles.Small);
     }
 
     private void DrawHelp(Rect area)
     {
         string text =
-            "<b>Objetivo:</b> comprar barato, embalar bem, vender com lucro e de forma honesta.\n\n" +
-            "<b>1. Comprar</b> — Entre na Eletro Centro ou na Casa dos Acessórios e fale com o vendedor. Dá para pechinchar.\n" +
-            "<b>2. Guardar</b> — No seu depósito (do outro lado da rua), use a estante para guardar produtos.\n" +
-            "<b>3. Embalar</b> — Na bancada do depósito, inspecione, escolha a caixa certa, proteja, passe fita e etiquete.\n" +
-            "<b>4. Vender</b> — Converse com os clientes na praça. Pergunte o que procuram, apresente o produto certo, use argumentos verdadeiros e negocie o preço.\n" +
-            "<b>5. Mestre</b> — No escritório do Mestre Negociador, receba a nota de cada negociação.\n\n" +
-            "<b>PC:</b> WASD mover · Mouse olhar · Shift correr · C agachar · E interagir · Tab mochila · F painel · Esc soltar cursor\n" +
-            "<b>Celular:</b> joystick à esquerda · arraste à direita para olhar · botões Interagir, Agachar, Mochila e Painel";
+            "<b>1. Sua mesa:</b> sente e use o computador. No <b>Discador</b> estão as pessoas para ligar hoje.\n" +
+            "<b>2. A ligação:</b> digite o que você falaria. Apresente-se, pergunte como a pessoa está, descubra o problema dela.\n" +
+            "<b>3. A oferta:</b> consulte o <b>Catálogo</b>. Ofereça o serviço que resolve o problema e use só argumentos verdadeiros.\n" +
+            "<b>4. O fechamento:</b> negocie o preço (sem passar do mínimo autorizado). Quando o cliente disser sim, use <b>Registrar venda</b>.\n" +
+            "<b>5. A supervisora:</b> na sala de vidro, a Regina ouve suas ligações e dá nota. Mentira cancela a venda.\n" +
+            "<b>6. Energia:</b> cada ligação cansa. Tome café na copa. O expediente vai das 9h às 18h.\n\n" +
+            "<b>PC:</b> WASD anda · mouse olha · E interage · Esc solta o mouse.  <b>Celular:</b> joystick à esquerda, arraste à direita, botão Interagir.";
         GUI.Label(new Rect(area.x, area.y, area.width, area.height - 60), text, UIStyles.Text);
         if (GUI.Button(new Rect(area.x, area.yMax - 50, 200, 46), "Voltar", UIStyles.Button)) showHelp = false;
     }
@@ -68,8 +58,5 @@ public class StartMenuPanel : IModalPanel
 /// <summary>Mostra a tela inicial ao abrir o jogo.</summary>
 public class StartMenu : MonoBehaviour
 {
-    private void Start()
-    {
-        GameUI.Open(new StartMenuPanel());
-    }
+    private void Start() => GameUI.Open(new StartMenuPanel());
 }

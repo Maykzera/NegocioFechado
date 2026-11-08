@@ -1,113 +1,94 @@
-# Negócio Fechado — DealMaster: Business Simulator
+# Negócio Fechado — Central de Vendas
 
-Simulador 3D de comércio e negociação em primeira pessoa (Unity 6 · PC Windows e Android).
+Jogo 3D em primeira pessoa (Unity 6 · PC Windows e Android) em que você trabalha numa **central de telemarketing** de verdade.
 
-Você começa com **R$ 1.500** e um depósito. Compra mercadorias nas lojas da cidade, **embala os pedidos à mão** na bancada, procura clientes na praça e **negocia de verdade**. Não existe botão "Vender": é preciso entender o que o cliente quer, argumentar, responder dúvidas e chegar a um preço. No fim, o **Mestre Negociador** analisa cada negociação e dá uma nota justificada.
+Você chega no escritório da *Conecta Vendas*, senta na sua mesa e usa o **computador virtual** para ligar para clientes. Na ligação você **digita o que quer falar**, e quem responde é uma **IA** (Claude) interpretando uma pessoa real, com nome, personalidade, problema e orçamento. Seu trabalho é **convencer de forma honesta**: descobrir o que a pessoa precisa, oferecer o serviço certo, responder às objeções e fechar o preço. Os serviços são fictícios.
 
-## Jogar agora no navegador
+A **Supervisora Regina** ouve as suas ligações e dá nota. **Venda feita com mentira é cancelada** e a comissão é estornada.
 
-A pasta [`web/`](web/) tem uma **versão jogável no navegador** (PC e celular), com o mesmo ciclo e as mesmas regras portadas do C#: compras com pechincha, minigame de embalagem, clientes com 5 perfis, mestre avaliador, painel financeiro, missões, relógio e salvamento automático no navegador.
+## O que tem no jogo
 
-- Abra `web/index.html` em qualquer navegador moderno (precisa de internet para baixar o motor 3D Three.js).
-- PC: clique na tela para controlar, WASD + mouse, E interage, Tab mochila, F painel.
-- Celular: arraste à esquerda para andar, à direita para olhar; botões Interagir, Mochila e Painel.
+- **Escritório 3D:**
+  - recepção;
+  - salão com 18 mesas e baias, com colegas falando ao telefone;
+  - sala de vidro da supervisora;
+  - sala de reunião;
+  - copa com cafeteira;
+  - banheiros;
+  - TV com o ranking do dia.
+- **Computador virtual:**
+  - *Discador*: lista de pessoas para ligar hoje;
+  - *Ligação*: chat em que você digita, com barras de interesse e confiança do cliente;
+  - *CRM*: histórico e transcrições;
+  - *Catálogo*: o que é verdade e o que **não** prometer;
+  - *Metas*, *Loja* (melhorias) e *Configurações*.
+- **8 serviços fictícios:** internet NetVeloz, seguro de celular Protege+, plano odontológico SorrisoBom, streaming CineMax, seguro de vida VidaTranquila, inglês FalaFácil, alarme ProtegeCasa e energia SolarCasa.
+- **Clientes:** cada um tem nome, idade, cidade, profissão, uma de 5 personalidades (econômico, exigente, indeciso, apressado, desconfiado), um problema real e um orçamento. Alguns pediram para **não ser incomodados**, e respeitar isso conta pontos.
+- **Registro de venda no CRM:** só funciona se o cliente realmente aceitou, pelo valor combinado e dentro do desconto autorizado. A comissão cai na hora.
+- **Supervisora:** avalia 9 critérios (abertura, descoberta, oferta adequada, argumentação, objeções, preço, transparência, respeito e fechamento), com observações e dicas.
+- **Carreira:** de Operador(a) Júnior a Gerente Comercial, com serviços liberados por nível, meta diária com bônus, 8 missões, energia (o café recupera) e melhorias (headset, cadeira, segundo monitor, leads qualificados, cafeteira).
+- **Expediente:** das 9h às 18h, com salvamento automático no fim do dia.
 
-A versão de navegador é um protótipo para validar a diversão do jogo. A versão completa, com cenas e builds para Windows e Android, é o projeto Unity abaixo.
+## Como abrir
 
-## Como abrir e jogar no Unity
+1. Instale o **Unity 6 LTS** com *Windows Build Support (IL2CPP)* e *Android Build Support*.
+2. Crie um projeto **Universal 3D (URP)** e copie a pasta `Assets/_DealMaster` deste repositório para a pasta `Assets/` do projeto.
+3. Menu **DealMaster → Configurar projeto**. Se ele avisar que mudou o *Active Input Handling*, reinicie o Unity.
+4. Menu **DealMaster → Construir escritório**.
+5. Aperte **Play**.
 
-1. Instale o **Unity 6 LTS** pelo Unity Hub, com os módulos *Windows Build Support (IL2CPP)* e *Android Build Support*.
-2. No Unity Hub: **New project → Universal 3D (URP)**.
-3. Copie a pasta `Assets/_DealMaster` deste repositório para dentro da pasta `Assets/` do projeto novo.
-4. No Unity, use o menu **DealMaster → Configurar projeto**. Se ele avisar que mudou o *Active Input Handling*, reinicie o Unity.
-5. Use o menu **DealMaster → Construir cena da Vertical Slice**. A cidade inteira é criada em `Scenes/CommercialDistrict.unity`.
-6. Aperte **Play**.
+Sem a IA instalada, o jogo já funciona com o **cliente offline**, que entende o que você escreve por palavras-chave.
 
-### Controles
+## Ativar a IA de verdade (Claude)
+
+1. Instale o [NuGetForUnity](https://github.com/GlitchEnzo/NuGetForUnity) (Package Manager → *Add package from git URL* → `https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity`).
+2. No menu **NuGet → Manage NuGet Packages**, procure **Anthropic** e instale (versão 13.6.0 ou mais nova).
+3. Menu **DealMaster → Detectar SDK da IA (Anthropic)**. Isso liga a IA no projeto.
+4. Crie uma chave em [console.anthropic.com](https://console.anthropic.com).
+5. No jogo: sente na sua mesa → **Configurações**. Cole a chave, deixe "Usar IA de verdade" marcado e salve.
+
+Como funciona:
+- **Custo:** cada fala do cliente e cada avaliação da supervisora é uma chamada à API, que é cobrada. O modelo padrão é o **Claude Opus 5.5**; nas Configurações dá para trocar pelo Sonnet 5.5 ou pelo Haiku 5.5 (mais barato).
+- **Se a IA falhar:** sem internet, com chave errada, com limite de uso atingido ou se a IA recusar, aquela fala é respondida pelo cliente offline e o jogo avisa.
+- **Sua chave:** fica salva só no seu aparelho. **Nunca distribua um build com a sua chave dentro.**
+
+## Usar os seus modelos 3D
+
+1. Importe a sua pasta de assets para o projeto.
+2. Menu **DealMaster → Lista de assets do escritório**.
+3. Arraste os prefabs para os campos: mesa, cadeira, monitor, teclado, headset, divisória, colega, supervisora, recepcionista, sofá, planta, cafeteira, geladeira, mesa de reunião, cadeira, bebedouro, impressora e TV. Cada um tem **escala**, **giro** e **altura** para ajustar.
+4. Menu **DealMaster → Construir escritório** de novo. O que ficou vazio continua com a forma simples.
+
+## Controles
 
 | | PC | Celular |
 |---|---|---|
-| Mover | WASD (Shift corre, C agacha) | Joystick à esquerda |
+| Andar | WASD (Shift corre) | Joystick à esquerda |
 | Olhar | Mouse | Arrastar à direita |
-| Interagir | E ou clique | Botão "Interagir" |
-| Mochila | Tab | Botão "Mochila" |
-| Painel (progresso, finanças, reclamações) | F | Botão "Painel" |
-| Soltar cursor / fechar tela | Esc | — |
-
-### O ciclo do jogo
-
-1. **Comprar:** na *Eletro Centro* (Seu Jorge) ou na *Casa dos Acessórios* (Dona Célia). Dá para pechinchar.
-2. **Guardar:** no seu depósito, do outro lado da rua, a estante guarda o estoque.
-3. **Embalar:** na bancada, inspecione, escolha a caixa, arraste o produto, proteja, passe a fita arrastando, etiquete e confirme. Embalagem ruim aumenta o risco de avaria.
-4. **Vender:** converse com os clientes na praça e nas calçadas. Cada um tem perfil, necessidade, orçamento, confiança e paciência.
-5. **Mestre:** no escritório do Mestre Otávio, receba a nota de 0 a 10 de cada negociação, com observações e sugestões.
-6. **Evoluir:** ganhe XP, suba de nível, amplie o estoque e libere o *Atacado Bom Preço* no nível 6.
-
-**Missão principal:** fazer uma venda lucrativa e ser aprovado pelo mestre (nota 7 ou mais).
+| Interagir (sentar, falar com a supervisora, café) | E ou clique | Botão "Interagir" |
+| Falar na ligação | Digite e aperte Enter | Teclado do celular ou frases prontas |
+| Soltar o mouse / fechar tela | Esc | Botão "Fechar" |
 
 ## Testes
 
-No Unity: **Window → General → Test Runner → EditMode → Run All**. São 81 testes cobrindo:
-- economia e estoque;
-- fornecedores e compras;
-- clientes e negociação;
-- embalagem;
-- vendas e pós-venda;
-- mestre;
-- progressão, missões e relógio;
-- salvamento.
-
-A lógica do jogo é separada da cena, então os testes rodam sem abrir o jogo.
+No Unity: **Window → General → Test Runner → EditMode → Run All**. A lógica do jogo não depende de cena:
+- analisador de mensagens;
+- cliente offline;
+- ligação;
+- registro de venda;
+- supervisora;
+- carreira;
+- jogo completo de um dia;
+- leitura das respostas da IA (esses testes só rodam com o SDK instalado).
 
 ## Gerar os executáveis
 
 - **Windows:** `DealMaster → Build Windows` gera `Builds/Windows/DealMaster.exe`.
 - **Android:** `DealMaster → Build Android (APK)` gera `Builds/Android/DealMaster.apk`.
 
-Linha de comando (CI):
+## Limitações atuais
 
-```bash
-Unity -batchmode -quit -projectPath <projeto> -executeMethod DealMasterBuild.BuildWindows
-Unity -batchmode -quit -projectPath <projeto> -executeMethod DealMasterBuild.BuildAndroid
-```
-
-## Documentação
-
-| Documento | Conteúdo |
-|---|---|
-| [`docs/ETAPAS.md`](docs/ETAPAS.md) | O que foi feito em cada uma das 8 etapas |
-| [`docs/PROJETO_MESTRE.md`](docs/PROJETO_MESTRE.md) | Conceito, arquitetura, progressão, cronograma e regras |
-| [`docs/PROMPT_MESTRE.md`](docs/PROMPT_MESTRE.md) | Prompt mestre original |
-| [`docs/simulador-negociacao.html`](docs/simulador-negociacao.html) | Exemplo interativo de negociação |
-
-## Estrutura do código
-
-```text
-Assets/_DealMaster/
-├── Scripts/            (assembly DealMaster)
-│   ├── Core/           GameBootstrap, GameServices, qualidade por plataforma
-│   ├── Player/         movimento, input PC/touch, interação
-│   ├── World/          portas, utilitários
-│   ├── Content/        produtos e fornecedores padrão
-│   ├── Economy/        carteira e livro-caixa
-│   ├── Inventory/      estoque, mochila, depósito
-│   ├── Suppliers/      fornecedores, compra e pechincha
-│   ├── Packaging/      avaliação e minigame de embalagem
-│   ├── NPC/            cérebro, memória, agentes e spawner de clientes
-│   ├── Negotiation/    motor e tela de negociação
-│   ├── Sales/          vendas, pós-venda, painel financeiro
-│   ├── Mentor/         avaliador, histórico e escritório do mestre
-│   ├── Progression/    XP, níveis, missões, relógio, dia/noite
-│   ├── Persistence/    salvamento versionado
-│   ├── Audio/          sons gerados por código
-│   └── UI/             HUD, telas, menu inicial
-├── Editor/             construtor da cena e builds
-└── Tests/EditMode/     testes automatizados
-```
-
-## Limitações atuais (honestas)
-
-- **Visual de protótipo:** prédios, móveis, produtos e personagens são formas simples (placeholders). A lógica toda funciona, e os modelos 3D definitivos podem substituir as formas sem mexer no código.
-- **Interface simples:** a UI é IMGUI, funcional e com escala para celular, mas visualmente simples. Pode ser trocada por UI Toolkit.
-- **Personagens:** os clientes andam em linha reta entre pontos (sem NavMesh) e não têm animação.
-- **Verificação:** o código foi compilado contra os assemblies do Unity 2021 e os testes rodaram fora do editor. **Ainda não foi aberto no Unity 6 de verdade**, então pode haver avisos ou pequenos ajustes de API na primeira abertura.
+- **Visual:** sem os seus assets, o escritório e as pessoas são formas simples. Os colegas não têm animação de esqueleto, só um balanço e balões de fala.
+- **Interface:** é IMGUI, funcional e com escala para celular, mas visualmente simples.
+- **Cliente offline:** entende por palavras-chave. Frases muito diferentes das esperadas podem não ser entendidas. Com a IA de verdade, a conversa é livre.
+- **Verificação:** o código foi compilado contra os assemblies do Unity 2021 e contra o SDK oficial da Anthropic, e os testes rodaram fora do editor. **Ainda não foi aberto no Unity 6 de verdade** e a IA ainda não foi testada com uma chave real.

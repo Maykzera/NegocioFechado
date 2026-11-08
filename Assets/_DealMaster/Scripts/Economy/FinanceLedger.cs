@@ -4,23 +4,23 @@ using System.Linq;
 
 public enum LedgerEntryType
 {
-    Purchase,
-    PackagingMaterials,
-    SaleRevenue,
-    PaymentFee,
-    Refund,
-    OperatingCost
+    Commission,
+    Chargeback,
+    QuotaBonus,
+    Coffee,
+    Upgrade
 }
 
-public readonly struct LedgerEntry
+[Serializable]
+public struct LedgerEntry
 {
-    public readonly int Day;
-    public readonly LedgerEntryType Type;
+    public int Day;
+    public LedgerEntryType Type;
 
     /// <summary>Positivo = entrada de dinheiro; negativo = saída.</summary>
-    public readonly long AmountCents;
+    public long AmountCents;
 
-    public readonly string Description;
+    public string Description;
 
     public LedgerEntry(int day, LedgerEntryType type, long amountCents, string description)
     {
@@ -31,16 +31,12 @@ public readonly struct LedgerEntry
     }
 }
 
-/// <summary>
-/// Livro-caixa: registra cada movimentação e calcula receita, custos, lucro bruto e lucro líquido.
-/// As fórmulas econômicas ficam centralizadas aqui.
-/// </summary>
+/// <summary>Extrato do vendedor: comissões, estornos, bônus e gastos.</summary>
 public sealed class FinanceLedger
 {
     private readonly List<LedgerEntry> entries = new List<LedgerEntry>();
 
     public IReadOnlyList<LedgerEntry> Entries => entries;
-
     public Func<int> DayProvider;
 
     public event Action<LedgerEntry> OnEntry;
@@ -53,18 +49,10 @@ public sealed class FinanceLedger
     }
 
     public long Sum(LedgerEntryType type) => entries.Where(e => e.Type == type).Sum(e => e.AmountCents);
+    public long SumOnDay(int day) => entries.Where(e => e.Day == day).Sum(e => e.AmountCents);
 
-    /// <summary>Receita líquida de vendas (vendas − reembolsos).</summary>
-    public long Revenue => Sum(LedgerEntryType.SaleRevenue) + Sum(LedgerEntryType.Refund);
-
-    /// <summary>Total gasto em mercadorias.</summary>
-    public long PurchasesCost => -Sum(LedgerEntryType.Purchase);
-
-    /// <summary>Despesas: embalagem, taxas e custos operacionais.</summary>
-    public long Expenses => -(Sum(LedgerEntryType.PackagingMaterials) + Sum(LedgerEntryType.PaymentFee) + Sum(LedgerEntryType.OperatingCost));
-
-    /// <summary>Saldo do caixa no período (entradas − saídas).</summary>
-    public long CashFlow => entries.Sum(e => e.AmountCents);
+    /// <summary>Ganhos líquidos: comissões e bônus menos estornos.</summary>
+    public long NetEarnings => Sum(LedgerEntryType.Commission) + Sum(LedgerEntryType.QuotaBonus) + Sum(LedgerEntryType.Chargeback);
 
     public void Restore(IEnumerable<LedgerEntry> saved)
     {

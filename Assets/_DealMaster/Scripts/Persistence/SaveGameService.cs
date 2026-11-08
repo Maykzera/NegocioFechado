@@ -56,7 +56,7 @@ public readonly struct LoadResult
 /// </summary>
 public sealed class SaveGameService
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
 
     private readonly ISaveStorage storage;
     private readonly ISaveSerializer serializer;
@@ -144,25 +144,23 @@ public sealed class SaveGameService
     /// <summary>Atualiza salvamentos antigos para o formato atual.</summary>
     public static bool Migrate(SaveData data)
     {
-        bool changed = false;
-        if (data.version < 1)
-        {
-            // v0 (protótipo) não tinha reputação nem relógio.
-            if (data.reputation <= 0f) data.reputation = 50f;
-            if (data.day <= 0) data.day = 1;
-            data.version = 1;
-            changed = true;
-        }
-        if (data.version < 2)
-        {
-            // v2 passou a salvar pedidos embalados e memória dos clientes.
-            if (data.packedOrders == null) data.packedOrders = new System.Collections.Generic.List<OrderData>();
-            if (data.customers == null) data.customers = new System.Collections.Generic.List<CustomerRecord>();
-            if (data.nextOrderNumber <= 0) data.nextOrderNumber = 1;
-            data.version = 2;
-            changed = true;
-        }
-        return changed;
+        if (data.version >= CurrentVersion) return false;
+        // Versões 1 e 2 eram do protótipo de comércio, sem nada aproveitável: começa uma carreira nova.
+        var fresh = new SaveData { version = CurrentVersion, balanceCents = Math.Max(0, data.balanceCents), day = 1, energy = 100 };
+        data.version = fresh.version;
+        data.day = fresh.day;
+        data.energy = fresh.energy;
+        data.xp = 0;
+        data.upgrades = new System.Collections.Generic.List<string>();
+        data.quotaDays = new System.Collections.Generic.List<int>();
+        data.missions = new System.Collections.Generic.List<string>();
+        data.sales = new System.Collections.Generic.List<SaleRecord>();
+        data.ledger = new System.Collections.Generic.List<LedgerEntry>();
+        data.reports = new System.Collections.Generic.List<CallReport>();
+        data.pendingReviews = new System.Collections.Generic.List<CallReport>();
+        data.reviews = new System.Collections.Generic.List<SupervisorReview>();
+        data.queue = new System.Collections.Generic.List<Lead>();
+        return true;
     }
 
     public static string Validate(SaveData data)
@@ -170,10 +168,8 @@ public sealed class SaveGameService
         if (data == null) return "Dados vazios.";
         if (data.balanceCents < 0) return "Saldo inválido.";
         if (data.xp < 0) return "Experiência inválida.";
-        if (data.inventory != null)
-            foreach (var s in data.inventory)
-                if (s == null || s.quantity <= 0 || s.totalCostCents < 0 || string.IsNullOrEmpty(s.productId))
-                    return "Estoque inválido.";
+        if (data.day < 1) return "Dia inválido.";
+        if (data.energy < 0 || data.energy > 100) return "Energia inválida.";
         return null;
     }
 }

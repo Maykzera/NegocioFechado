@@ -73,7 +73,7 @@ public class GameHUDController : MonoBehaviour
     private void DrawStatus()
     {
         if (!GameServices.IsReady) return;
-        GUI.Label(new Rect(20, 14, 400, 34), CustomerBrain.FormatReais(GameServices.Wallet.BalanceCents), big);
+        GUI.Label(new Rect(20, 14, 400, 34), Money.Format(GameServices.Wallet.BalanceCents), big);
         HUDExtensions.DrawStatusLines(new Rect(20, 50, 420, 120), label);
     }
 

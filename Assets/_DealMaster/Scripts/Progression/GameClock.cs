@@ -6,10 +6,10 @@ using System;
 /// </summary>
 public sealed class GameClock
 {
-    public const int DayStartHour = 8;
-    public const int DayEndHour = 22;
+    public const int DayStartHour = 9;
+    public const int DayEndHour = 18;
 
-    public float GameMinutesPerSecond { get; set; } = 2f;
+    public float GameMinutesPerSecond { get; set; } = 1f;
 
     public int Day { get; private set; } = 1;
 
