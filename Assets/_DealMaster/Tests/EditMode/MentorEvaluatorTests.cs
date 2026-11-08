@@ -129,4 +129,27 @@ public class MentorEvaluatorTests
         Assert.IsTrue(s.HasApprovedProfitableSale);
         Assert.AreEqual(System.Math.Round((first.Grade + second.Grade) / 2, 1), s.RecentAverage(), 0.051);
     }
+
+    [Test]
+    public void GreatServiceButLoss_IsNeverApproved()
+    {
+        var c = GoodNegotiation();
+        // mesma conversa excelente, mas vendida abaixo do custo
+        var e = MentorEvaluator.Evaluate(Record(c, true, 6200));
+        Assert.LessOrEqual(e.Grade, 6.0f);
+        Assert.IsFalse(MentorEvaluator.IsApproved(e));
+        Assert.IsTrue(e.Observations.Any(o => o.Contains("prejuízo")));
+    }
+
+    [Test]
+    public void AcceptingLowCounter_IsFlagged_NotAsCustomerAcceptingFirst()
+    {
+        var c = new CustomerBrain("Ana", CustomerArchetype.Economico, ProductCategory.Electronics, 15000, 5);
+        c.AskAboutNeeds();
+        c.PresentProduct(Fone);
+        c.ProposePrice(20000);
+        if (c.LastCounterOfferCents > 0) c.AcceptCounterOffer();
+        var e = MentorEvaluator.Evaluate(Record(c, c.State == CustomerState.Accepted, c.AgreedPriceCents));
+        Assert.IsFalse(e.Observations.Any(o => o.Contains("aceitou de primeira")));
+    }
 }

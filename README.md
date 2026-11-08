@@ -4,7 +4,17 @@ Simulador 3D de comércio e negociação em primeira pessoa (Unity 6 · PC Windo
 
 Você começa com **R$ 1.500** e um depósito. Compra mercadorias nas lojas da cidade, **embala os pedidos à mão** na bancada, procura clientes na praça e **negocia de verdade**. Não existe botão "Vender": é preciso entender o que o cliente quer, argumentar, responder dúvidas e chegar a um preço. No fim, o **Mestre Negociador** analisa cada negociação e dá uma nota justificada.
 
-## Como abrir e jogar
+## Jogar agora no navegador
+
+A pasta [`web/`](web/) tem uma **versão jogável no navegador** (PC e celular), com o mesmo ciclo e as mesmas regras portadas do C#: compras com pechincha, minigame de embalagem, clientes com 5 perfis, mestre avaliador, painel financeiro, missões, relógio e salvamento automático no navegador.
+
+- Abra `web/index.html` em qualquer navegador moderno (precisa de internet para baixar o motor 3D Three.js).
+- PC: clique na tela para controlar, WASD + mouse, E interage, Tab mochila, F painel.
+- Celular: arraste à esquerda para andar, à direita para olhar; botões Interagir, Mochila e Painel.
+
+A versão de navegador é um protótipo para validar a diversão do jogo. A versão completa, com cenas e builds para Windows e Android, é o projeto Unity abaixo.
+
+## Como abrir e jogar no Unity
 
 1. Instale o **Unity 6 LTS** pelo Unity Hub, com os módulos *Windows Build Support (IL2CPP)* e *Android Build Support*.
 2. No Unity Hub: **New project → Universal 3D (URP)**.

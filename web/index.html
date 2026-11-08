@@ -1,0 +1,1077 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>DealMaster Negócio Fechado</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@400;600;800&display=swap">
+<style>
+  /* Layout: tela cheia 3D com HUD de letreiro de comércio de bairro; painéis como balcão de madeira escura. Visual único (escuro) por escolha. */
+  :root {
+    color-scheme: dark;
+    --ink: #f4efe4;
+    --muted: #b9b3a6;
+    --panel: #1f2a2e;
+    --panel-2: #283639;
+    --line: #3d4d50;
+    --sign: #f2b632;
+    --sign-ink: #2a1d05;
+    --good: #6fcf8e;
+    --bad: #ff8a72;
+    --info: #7fb7ff;
+    --bg: #0e1416;
+    --display: "Bungee", "Arial Black", Impact, sans-serif;
+    --body: "Figtree", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  html, body { height: 100%; }
+  [hidden] { display: none !important; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+  #game { position: fixed; inset: 0; }
+  #game canvas { display: block; width: 100%; height: 100%; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  #hud { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); left: max(12px, env(safe-area-inset-left, 0px)); display: grid; gap: 4px; pointer-events: none; text-shadow: 0 1px 3px #000a; max-width: min(70vw, 460px); }
+  #hud .money { font-family: var(--display); font-size: clamp(20px, 3.4vw, 30px); color: var(--sign); }
+  #hud .line { font-size: 14px; color: var(--ink); }
+  #hud .warn { color: var(--bad); font-weight: 600; }
+  #crosshair { position: fixed; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 2px #0008; pointer-events: none; }
+  #prompt { position: fixed; left: 50%; top: calc(50% + 26px); transform: translateX(-50%); background: #000a; padding: 6px 12px; border-radius: 6px; font-weight: 600; pointer-events: none; white-space: nowrap; }
+  #toasts { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); transform: translateX(-50%); display: grid; gap: 6px; width: min(92vw, 620px); pointer-events: none; z-index: 30; }
+  .toast { background: var(--panel); border-left: 4px solid var(--sign); padding: 8px 12px; border-radius: 6px; box-shadow: 0 4px 16px #0006; font-size: 14px; animation: in .25s ease-out; }
+  @keyframes in { from { transform: translateY(8px); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+
+  #touch { position: fixed; inset: 0; pointer-events: none; }
+  #touch .btn { position: absolute; pointer-events: auto; border-radius: 50%; background: #ffffff22; border: 2px solid #ffffff55; color: var(--ink); font-weight: 800; font-size: 13px; display: grid; place-items: center; backdrop-filter: blur(2px); }
+  #tInteract { width: 92px; height: 92px; right: calc(max(16px, env(safe-area-inset-right, 0px)) + 18px); bottom: calc(env(safe-area-inset-bottom, 0px) + 40px); background: #f2b63244 !important; }
+  #tBag { width: 64px; height: 64px; right: calc(max(16px, env(safe-area-inset-right, 0px)) + 130px); bottom: calc(env(safe-area-inset-bottom, 0px) + 30px); }
+  #tPanel { width: 64px; height: 64px; right: calc(max(16px, env(safe-area-inset-right, 0px)) + 4px); top: calc(env(safe-area-inset-top, 0px) + 12px); }
+  #stick { position: absolute; width: 120px; height: 120px; border-radius: 50%; border: 2px solid #ffffff44; background: #ffffff14; transform: translate(-50%, -50%); }
+  #stick i { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: #ffffff55; }
+
+  #modal { position: fixed; inset: 0; background: #0009; display: grid; place-items: center; z-index: 20; padding-block: calc(env(safe-area-inset-top, 0px) + 10px) calc(env(safe-area-inset-bottom, 0px) + 10px); padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); }
+  .panel { width: min(1000px, 100%); max-height: 100%; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 20px 60px #000a; overflow: hidden; }
+  .panel header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--sign); color: var(--sign-ink); }
+  .panel header h2 { font-family: var(--display); font-size: clamp(16px, 2.6vw, 22px); font-weight: 400; margin: 0; flex: 1; text-wrap: balance; }
+  .panel header button { background: var(--sign-ink); color: var(--sign); }
+  .panel .body { padding: 14px 16px; overflow: auto; display: grid; gap: 12px; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; align-items: start; }
+  .cols > * { min-width: 0; }
+  h3 { margin: 0; font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  p { margin: 0; line-height: 1.45; }
+  button { font: 600 15px var(--body); color: var(--ink); background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; cursor: pointer; text-align: left; }
+  button:hover:not(:disabled) { border-color: var(--sign); }
+  button:focus-visible { outline: 2px solid var(--sign); outline-offset: 2px; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--sign); color: var(--sign-ink); border-color: var(--sign); font-weight: 800; text-align: center; }
+  button.sel { border-color: var(--sign); background: #3b3a26; }
+  .list { display: grid; gap: 6px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row > .grow { flex: 1; min-width: 0; }
+  .small { font-size: 13px; color: var(--muted); }
+  .good { color: var(--good); } .bad { color: var(--bad); } .money2 { color: var(--sign); font-weight: 800; }
+  .bar { height: 12px; border-radius: 6px; background: #ffffff18; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 6px; }
+  .meter { display: grid; grid-template-columns: minmax(90px, 40%) 1fr 44px; gap: 8px; align-items: center; font-size: 13px; }
+  .chat { background: #0003; border-radius: 8px; padding: 10px; height: 230px; overflow: auto; display: grid; gap: 6px; align-content: start; font-size: 14px; }
+  .chat .me { color: var(--info); } .chat .them { color: var(--ink); }
+  .price { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .price button { padding: 8px 10px; text-align: center; }
+  .price .val { font-family: var(--display); color: var(--sign); font-size: 20px; min-width: 120px; text-align: center; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .steps { display: flex; gap: 4px; flex-wrap: wrap; font-size: 12px; }
+  .steps span { padding: 3px 8px; border-radius: 99px; background: #ffffff12; color: var(--muted); }
+  .steps span.on { background: var(--sign); color: var(--sign-ink); font-weight: 800; }
+  .steps span.done { color: var(--good); }
+  canvas.work { width: 100%; max-width: 520px; aspect-ratio: 13 / 9; background: #2b2420; border-radius: 10px; touch-action: none; }
+  .grade { font-family: var(--display); font-size: 40px; }
+  .card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 6px; }
+  .start-hero { font-family: var(--display); font-size: clamp(28px, 6vw, 54px); color: var(--sign); line-height: 1; }
+  kbd { background: #ffffff18; border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+</style>
+
+<div id="game"></div>
+<div id="hud"></div>
+<div id="crosshair"></div>
+<div id="prompt" hidden></div>
+<div id="toasts"></div>
+<div id="touch" hidden>
+  <div id="stick" hidden><i></i></div>
+  <div class="btn" id="tInteract">Interagir</div>
+  <div class="btn" id="tBag">Mochila</div>
+  <div class="btn" id="tPanel">Painel</div>
+</div>
+<div id="modal" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+   REGRAS DO JOGO (portadas dos scripts C# do projeto Unity)
+   ===================================================================== */
+const SAVE_KEY = "dealmaster_save_v2", SAVE_VERSION = 2;
+const fmt = c => { const s = c < 0 ? "-" : ""; c = Math.abs(Math.round(c)); const r = Math.floor(c / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); return `${s}R$ ${r},${String(c % 100).padStart(2, "0")}`; };
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hash = s => { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+
+const CAT = { Electronics: "eletrônicos", Accessories: "acessórios", Home: "casa" };
+const BOX = ["pequena", "média", "grande"];
+const PRODUCTS = [
+  ["fone_bt", "Fone de ouvido sem fio", "Electronics", 8500, 15000, .5, .75, 0, ["Bateria dura cerca de 20 horas", "Garantia de 6 meses", "Cancelamento de ruído passivo"], ["É à prova d'água para nadar", "É a mesma qualidade de marca famosa"]],
+  ["caixa_som", "Caixa de som Bluetooth", "Electronics", 7000, 12900, .4, .7, 1, ["Resistente a respingos", "Bateria de 10 horas", "Conecta dois aparelhos"], ["Tem potência de caixa de festa", "Nunca descarrega"]],
+  ["carregador", "Carregador turbo 20W", "Electronics", 2500, 5900, .2, .65, 0, ["Carrega 50% em 30 minutos", "Proteção contra superaquecimento"], ["Carrega o celular em 5 minutos"]],
+  ["power_bank", "Power bank 10.000 mAh", "Electronics", 4500, 9900, .3, .7, 0, ["Carrega o celular cerca de duas vezes", "Duas saídas USB", "Indicador de carga"], ["Carrega um notebook inteiro"]],
+  ["mouse_sf", "Mouse sem fio", "Electronics", 2800, 5900, .3, .6, 0, ["Pilha dura meses", "Silencioso", "Funciona sem instalar nada"], ["É profissional para jogos de competição"]],
+  ["capinha", "Capinha de celular reforçada", "Accessories", 800, 2900, .05, .6, 0, ["Cantos reforçados contra quedas", "Não amarela fácil"], ["Aguenta queda do terceiro andar"]],
+  ["pelicula", "Película de vidro", "Accessories", 400, 1900, .8, .55, 0, ["Vidro temperado 9H", "Aplicação sem bolhas com o kit"], ["É inquebrável"]],
+  ["suporte_carro", "Suporte veicular magnético", "Accessories", 1200, 3500, .1, .6, 0, ["Imã forte", "Gira 360 graus", "Encaixa na saída de ar"], ["Serve em qualquer carro e qualquer celular"]],
+  ["garrafa", "Garrafa térmica 500 ml", "Home", 2500, 5900, .2, .7, 1, ["Mantém gelado por 24 horas", "Aço inox", "Não vaza"], ["Mantém quente por uma semana"]],
+  ["luminaria", "Luminária LED de mesa", "Home", 3000, 6900, .6, .65, 2, ["Três níveis de brilho", "Recarregável por USB", "Braço flexível"], ["Gasta zero de energia"]],
+].map(([id, name, cat, cost, ref, frag, q, size, ben, exa]) => ({ id, name, cat, cost, ref, frag, q, size, ben, exa }));
+const P = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
+
+function makeSupplier(id, name, clerk, open, close, maxDisc, volMin, volDisc, items) {
+  return { id, name, clerk, open, close, maxDisc, volMin, volDisc, rel: 0, items };
+}
+function defaultSuppliers() {
+  const it = (ids, stock, restock, mult = 1, lvl = 1) => Object.fromEntries(ids.map(i => [i, { price: Math.round(P[i].cost * mult), stock, max: stock, restock, lvl }]));
+  return {
+    eletro_centro: makeSupplier("eletro_centro", "Eletro Centro", "Seu Jorge", 8, 18, .08, 5, .05, it(["fone_bt", "caixa_som", "carregador", "power_bank", "mouse_sf"], 8, 4)),
+    casa_acessorios: makeSupplier("casa_acessorios", "Casa dos Acessórios", "Dona Célia", 9, 19, .15, 6, .08, it(["capinha", "pelicula", "suporte_carro", "garrafa", "luminaria"], 12, 6)),
+    atacado: makeSupplier("atacado", "Atacado Bom Preço", "Seu Antônio", 7, 17, .05, 10, .06, it(PRODUCTS.map(p => p.id), 30, 15, .85, 6)),
+  };
+}
+const volPrice = (s, id, q) => q >= s.volMin ? Math.ceil(s.items[id].price * (1 - s.volDisc)) : s.items[id].price;
+const floorPrice = (s, id, q) => Math.ceil(volPrice(s, id, q) * (1 - Math.min(s.maxDisc * (1 + .5 * s.rel), .9)));
+const isOpen = (s, h) => h >= s.open && h < s.close;
+function evaluateOffer(s, id, q, offer) {
+  const ask = volPrice(s, id, q), fl = floorPrice(s, id, q);
+  if (offer >= ask) return { r: "accept", price: ask };
+  if (offer >= fl) return { r: "accept", price: offer };
+  if (offer < fl * .7) return { r: "reject" };
+  return { r: "counter", price: fl + Math.floor((ask - fl) / 2) };
+}
+
+// ---- Estoque
+const LOC = { backpack: "Mochila", warehouse: "Depósito", bench: "Bancada", order: "Pedidos prontos" };
+function capsFor(level) { return { backpack: level >= 5 ? 20 : level >= 2 ? 14 : 10, warehouse: level >= 8 ? 200 : level >= 3 ? 100 : 60, bench: level >= 3 ? 6 : 4, order: level >= 4 ? 30 : 20 }; }
+const used = loc => Object.values(S.inv[loc]).reduce((a, s) => a + s.qty, 0);
+const free = loc => capsFor(level())[loc] - used(loc);
+function addStock(loc, id, qty, unitCost) { const st = S.inv[loc][id] || (S.inv[loc][id] = { qty: 0, total: 0 }); st.qty += qty; st.total += unitCost * qty; }
+function takeStock(loc, id, qty) {
+  const st = S.inv[loc][id]; if (!st || st.qty < qty || qty <= 0) return null;
+  const cost = qty === st.qty ? st.total : Math.floor(st.total / st.qty) * qty;
+  st.qty -= qty; st.total -= cost; if (st.qty === 0) delete S.inv[loc][id];
+  return cost;
+}
+function transfer(from, to, id, qty) { if (qty <= 0 || free(to) < qty) return false; const c = takeStock(from, id, qty); if (c === null) return false; const st = S.inv[to][id] || (S.inv[to][id] = { qty: 0, total: 0 }); st.qty += qty; st.total += c; return true; }
+const stockValue = () => Object.values(S.inv).reduce((a, l) => a + Object.values(l).reduce((b, s) => b + s.total, 0), 0);
+
+// ---- Embalagem (PackagingEvaluator)
+const BOX_COST = [150, 250, 400], PAD_COST = 50, TAPE_COST = 20, LABEL_COST = 30;
+const recPadding = p => Math.ceil(p.frag * 4);
+function packCost(i) { return BOX_COST[i.box] + i.pad * PAD_COST + i.tape.length * TAPE_COST + (i.label ? LABEL_COST : 0); }
+function evalPack(i) {
+  const p = i.product, mat = packCost(i), diff = i.box - p.size;
+  const bad = msg => ({ valid: false, problem: msg, mat, risk: 1 });
+  if (diff < 0) return bad("O produto não cabe nessa caixa.");
+  if (!i.closed) return bad("Feche a caixa antes da fita.");
+  if (!i.tape.length) return bad("A caixa precisa de fita.");
+  if (!i.label) return bad("Falta a etiqueta.");
+  const sizeFit = diff === 0 ? 1 : diff === 1 ? .6 : .3;
+  const need = recPadding(p) + diff * 2;
+  const placement = 1 - clamp01(i.offset);
+  let protection = clamp01((need === 0 ? 1 : clamp01(i.pad / need)) * .75 + placement * .25);
+  if (need === 0 && i.pad === 0) protection = clamp01(.85 + placement * .15);
+  const integrity = clamp01(i.tape.reduce((a, t) => a + clamp01(t), 0) / 2);
+  const presentation = clamp01(.45 * (i.inspected ? 1 : 0) + .3 * clamp01(i.labelAcc) + .25 * placement);
+  const efficiency = clamp01(1 - Math.max(0, i.pad - need - 1) * .15 - Math.max(0, i.tape.length - 3) * .1 - (1 - sizeFit) * .4);
+  const time = i.secs <= 45 ? 1 : clamp01(1 - (i.secs - 45) / 105) * .7 + .3;
+  const overall = clamp01(protection * .3 + integrity * .2 + sizeFit * .15 + presentation * .15 + efficiency * .1 + time * .1);
+  const risk = Math.min(.9, clamp01(p.frag * (1 - protection * .7 - integrity * .3) * .9 + (i.inspected ? 0 : .05)));
+  return { valid: true, protection, integrity, sizeFit, presentation, efficiency, time, overall, risk, mat };
+}
+
+// ---- Cliente (CustomerBrain)
+const ARCH = {
+  Economico: { label: "econômico", budget: 1, sens: .9, trust: .4, interest: .3, patience: 5, thr: .72, anchor: .8, minQ: .3, gain: 1 },
+  Exigente: { label: "exigente", budget: 1.3, sens: .4, trust: .4, interest: .25, patience: 4, thr: .6, anchor: .9, minQ: .7, gain: .8 },
+  Indeciso: { label: "indeciso", budget: 1.1, sens: .6, trust: .45, interest: .3, patience: 6, thr: .62, anchor: .88, minQ: .4, gain: 1 },
+  Apressado: { label: "apressado", budget: 1.2, sens: .4, trust: .5, interest: .45, patience: 2, thr: .5, anchor: .95, minQ: .3, gain: 1 },
+  Desconfiado: { label: "desconfiado", budget: 1.1, sens: .6, trust: .2, interest: .3, patience: 4, thr: .6, anchor: .85, minQ: .5, gain: 1.5 },
+};
+const LINES = {
+  greet: ["Oi, tudo bem?", "Olá! Só dando uma olhada.", "Bom dia!"],
+  need: ["Estou procurando algo de {cat}.", "Na verdade eu preciso de alguma coisa de {cat}.", "Queria ver opções de {cat}."],
+  interested: ["Hmm, isso parece interessante.", "Gostei. Me fala mais sobre ele.", "Era bem isso que eu estava procurando."],
+  other: ["Não era bem isso que eu procurava.", "Você não tem outra coisa? Isso não me serve.", "Legal, mas não é o que eu preciso."],
+  convinced: ["Faz sentido.", "Ah, isso é bom saber.", "Ok, isso me deixa mais tranquilo."],
+  doubt: ["Não sei não...", "Hmm, não me convenceu.", "Tem certeza disso?"],
+  counter: ["Faço por {p}.", "Consigo pagar {p}. Fechamos?", "Se fizer por {p} eu levo."],
+  time: ["Deixa eu pensar um pouco...", "Preciso pensar. Posso te responder já já?", "Hmm, não sei... vou pensar."],
+  accept: ["Fechado! Levo por {p}.", "Negócio fechado por {p}.", "Combinado, {p} então."],
+  reject: ["Não vai dar, obrigado.", "Vou passar dessa vez.", "Não, obrigado. Vou comparar com outras lojas."],
+  leave: ["Tenho que ir, até mais.", "Deixa pra lá. Tchau.", "Vou procurar em outro lugar."],
+};
+class Customer {
+  constructor(name, arch, need, expected, seed) {
+    this.name = name; this.arch = arch; this.t = ARCH[arch]; this.need = need; this.r = rng(seed);
+    this.budget = Math.round(expected * this.t.budget * (.9 + this.r() * .2));
+    this.trust = this.t.trust; this.interest = this.t.interest; this.patience = this.t.patience;
+    this.state = "browsing"; this.mem = []; this.round = 0; this.product = null; this.counter = 0; this.agreed = 0;
+    this.askedTime = false; this.needRevealed = false; this.used = new Set(); this.lastLine = {};
+  }
+  get finished() { return ["accepted", "rejected", "left"].includes(this.state); }
+  log(type, price = 0) { this.mem.push({ round: this.round, type, price, trust: this.trust, interest: this.interest }); }
+  adj(v) { this.trust = clamp01(this.trust + v * this.t.gain); }
+  usePat(n) { this.patience = Math.max(0, this.patience - n); if (this.patience === 0) this.state = "left"; }
+  say(type, p = 0) {
+    const pool = LINES[type]; let i = Math.floor(this.r() * pool.length);
+    if (pool.length > 1 && this.lastLine[type] === i) i = (i + 1) % pool.length; this.lastLine[type] = i;
+    return { type, price: p, line: pool[i].replace("{p}", fmt(p)).replace("{cat}", CAT[this.need]) };
+  }
+  done() { return { type: "leave", line: "(a conversa já terminou)" }; }
+  leaveNow() { this.state = "left"; this.log("left"); return this.say("leave"); }
+  acceptance(price) {
+    if (!this.product || price <= 0 || price > this.budget) return 0;
+    const ratio = price / this.product.ref, ps = clamp01(1.5 - ratio);
+    return clamp01(ps * this.t.sens + this.interest * .3 + this.trust * .2);
+  }
+  willingness() {
+    if (!this.product) return 0;
+    const need = this.t.thr - (this.interest * .3 + this.trust * .2);
+    let max;
+    if (need <= 0) max = Infinity; else { const ps = need / this.t.sens; if (ps > 1) return 0; max = 1.5 - ps; }
+    if (max <= 0) return 0;
+    return Math.floor(Math.min(max * this.product.ref, this.budget));
+  }
+  greet() { if (this.finished) return this.done(); this.adj(.03); this.log("greeted"); return this.say("greet"); }
+  askNeeds() { if (this.finished) return this.done(); if (!this.needRevealed) this.adj(.08); this.needRevealed = true; this.log("asked"); return this.say("need"); }
+  present(p) {
+    if (this.finished) return this.done();
+    this.product = p; this.used.clear(); this.state = "negotiating"; this.counter = 0; this.log("presented", p.ref);
+    if (p.cat !== this.need) { this.interest = clamp01(this.t.interest * .5); this.usePat(1); return this.state === "left" ? this.leaveNow() : this.say("other"); }
+    let i = this.t.interest + .1; if (p.q < this.t.minQ) i -= .2; else i += (p.q - this.t.minQ) * .1;
+    this.interest = clamp01(i);
+    return this.say(p.q < this.t.minQ ? "doubt" : "interested");
+  }
+  explain(text, isTrue) {
+    if (this.finished) return this.done();
+    if (!this.product) return this.say("doubt");
+    if (this.used.has(text)) { this.usePat(1); return this.state === "left" ? this.leaveNow() : this.say("doubt"); }
+    this.used.add(text);
+    if (isTrue) { this.interest = clamp01(this.interest + .1); this.adj(.05); this.log("benefit"); return this.say("convinced"); }
+    this.log("lie");
+    const chance = this.arch === "Desconfiado" ? .7 : this.arch === "Exigente" ? .5 : .25;
+    if (this.r() < chance) { this.trust = clamp01(this.trust - .3); this.usePat(2); this.log("lieCaught"); return this.state === "left" ? this.leaveNow() : this.say("doubt"); }
+    this.interest = clamp01(this.interest + .1); return this.say("convinced");
+  }
+  answer() { if (this.finished) return this.done(); this.adj(.06); this.log("answered"); return this.say("convinced"); }
+  pressure() { if (this.finished) return this.done(); this.trust = clamp01(this.trust - .12); this.usePat(this.arch === "Apressado" ? 1 : 2); this.log("pressured"); return this.state === "left" ? this.leaveNow() : this.say("doubt"); }
+  propose(price) {
+    if (this.finished) return this.done();
+    if (!this.product || price <= 0) return this.say("doubt");
+    this.round++; this.log("proposed", price);
+    const acc = this.acceptance(price);
+    if (this.product.cat === this.need && acc >= this.t.thr) return this.acceptAt(price);
+    const will = this.willingness();
+    if (will > 0 && price > will * 1.6) { this.trust = clamp01(this.trust - .05); this.usePat(1); }
+    if (this.arch === "Indeciso" && !this.askedTime && acc >= this.t.thr - .08) { this.askedTime = true; this.state = "thinking"; this.log("askedTime", price); return this.say("time", price); }
+    this.usePat(1); if (this.state === "left") return this.leaveNow();
+    if (this.product.cat !== this.need) { this.state = "rejected"; this.log("rejected", price); return this.say("reject"); }
+    if (will <= 0) return this.say("doubt");
+    const prog = Math.min(1, this.round / this.t.patience), f = this.t.anchor + (1 - this.t.anchor) * prog;
+    let c = Math.round(will * f / 100) * 100; if (c >= price) c = Math.round(price * .95 / 100) * 100;
+    c = Math.max(100, Math.min(c, this.budget)); this.counter = c; this.log("countered", c);
+    return this.say("counter", c);
+  }
+  acceptCounter() { if (this.finished) return this.done(); if (this.counter <= 0) return this.say("doubt"); this.log("acceptedCounter", this.counter); return this.acceptAt(this.counter); }
+  reconsider(price) { if (this.state !== "thinking") return this.say("doubt"); this.state = "negotiating"; return this.acceptance(price) >= this.t.thr - .08 ? this.acceptAt(price) : this.propose(price); }
+  end() { return this.finished ? this.done() : this.leaveNow(); }
+  acceptAt(p) { this.state = "accepted"; this.agreed = p; this.adj(.05); this.log("sale", p); return this.say("accept", p); }
+}
+
+// ---- Mestre (MentorEvaluator)
+const CRITERIA = [["Compreensão da necessidade", .14], ["Conhecimento do produto", .12], ["Clareza dos argumentos", .08], ["Tratamento de objeções", .10], ["Estratégia de preço", .12], ["Margem de lucro", .12], ["Transparência", .14], ["Satisfação do cliente", .10], ["Resultado da venda", .08]];
+const SUGGEST = { "Compreensão da necessidade": "Comece perguntando o que o cliente procura e apresente o produto certo.", "Conhecimento do produto": "Explique pelo menos duas vantagens reais do produto.", "Clareza dos argumentos": "Use argumentos verdadeiros e específicos, sem exageros.", "Tratamento de objeções": "Quando o cliente hesitar, responda à dúvida antes de mexer no preço.", "Estratégia de preço": "Abra perto do preço de mercado e conceda descontos aos poucos.", "Margem de lucro": "Calcule o custo com taxa e embalagem antes de aceitar uma contraproposta.", "Transparência": "Nunca invente características. A confiança vale mais que uma venda.", "Satisfação do cliente": "Evite pressão e construa confiança com atendimento.", "Resultado da venda": "Tente concluir a venda depois de construir interesse e confiança." };
+function evaluate(r) {
+  const ev = r.events, n = t => ev.filter(e => e.type === t).length, idx = t => ev.findIndex(e => e.type === t);
+  const asked = n("asked"), pres = n("presented"), trueA = n("benefit"), lies = n("lie"), caught = n("lieCaught"), ans = n("answered"), press = n("pressured");
+  const counters = n("countered") + n("askedTime"), props = ev.filter(e => e.type === "proposed").map(e => e.price);
+  const right = r.productCat && r.productCat === r.need, before = asked > 0 && (pres === 0 || idx("asked") < idx("presented")), ref = Math.max(1, r.ref);
+  let need = (before ? .5 : asked ? .3 : 0) + (right ? .5 : 0); if (pres > 1) need -= .1 * (pres - 1);
+  const know = pres === 0 ? 0 : Math.min(1, trueA / 2);
+  const clar = trueA + lies === 0 ? (pres > 0 ? .4 : 0) : trueA / (trueA + lies);
+  const obj = counters === 0 ? (ans > 0 ? 1 : .8) : Math.min(1, .4 + .3 * ans);
+  let price = 0;
+  if (props.length) { const f = props[0] / ref; price = f >= .95 && f <= 1.2 ? 1 : f >= .85 && f <= 1.35 ? .7 : f > 1.6 || f < .7 ? .2 : .45; if (props.length > 4) price -= .15; if (r.sale && r.price < ref * .8) price -= .3; }
+  const profit = r.price - r.fee - r.cost - r.mat;
+  const margin = !r.sale || r.price <= 0 ? 0 : profit <= 0 ? 0 : Math.min(1, profit / r.price / .35);
+  const transp = Math.max(0, 1 - .4 * lies - .2 * caught);
+  let sat = r.final === "accepted" ? Math.min(1, .4 + r.trust * .8) : r.final === "rejected" ? .4 : .2; sat -= .15 * press; if (r.sale && !r.packed) sat -= .1;
+  const res = r.sale ? (profit > 0 ? 1 : .5) : .2;
+  const vals = [need, know, clar, obj, price, margin, transp, sat, res].map(clamp01);
+  const criteria = CRITERIA.map(([name], i) => ({ name, v: vals[i] }));
+  let grade = Math.round(CRITERIA.reduce((a, [, w], i) => a + vals[i] * w, 0) * 100) / 10;
+  // O mestre não aprova venda com prejuízo nem desconto excessivo, por melhor que tenha sido o atendimento.
+  if (r.sale && profit <= 0) grade = Math.min(grade, 6); else if (r.sale && r.price < ref * .8) grade = Math.min(grade, 6.5);
+  const obs = [];
+  if (!asked) obs.push("Você não perguntou o que o cliente procurava."); else if (before) obs.push("Boa abertura: entendeu a necessidade antes de oferecer.");
+  if (pres > 0 && !right) obs.push("O produto apresentado não atendia à necessidade do cliente.");
+  if (lies) obs.push(caught ? `Você usou ${lies} informação(ões) falsa(s) e o cliente percebeu. Isso destrói a confiança.` : `Você usou ${lies} informação(ões) falsa(s). O cliente não percebeu, mas eu percebi.`);
+  if (press) obs.push("Pressionar o cliente costuma afastá-lo.");
+  if (r.sale && r.price < ref * .8) obs.push("Desconto excessivo: vendeu bem abaixo do preço de mercado.");
+  if (r.sale && profit <= 0) obs.push("A venda deu prejuízo depois de taxas e embalagem.");
+  if (r.sale && props.length === 1 && props[0] === r.price && r.price < ref * .9) obs.push("Oportunidade perdida: o cliente aceitou de primeira um preço baixo. Dava para pedir mais.");
+  if (n("acceptedCounter") && r.sale && r.price < ref * .8) obs.push("Você aceitou uma contraproposta muito baixa. Antes de aceitar, tente argumentar ou contrapropor.");
+  if (counters && !ans) obs.push("O cliente demonstrou dúvidas e elas não foram respondidas.");
+  if (r.sale && !r.packed) obs.push("O produto foi entregue sem embalagem, com mais risco de avaria.");
+  if (r.sale && r.packed && r.packScore < .6) obs.push("A embalagem foi fraca e pode gerar reclamação.");
+  if (r.sale && profit > 0 && !lies && !press) obs.push("Venda honesta e lucrativa.");
+  const sug = criteria.slice().sort((a, b) => a.v - b.v || a.name.localeCompare(b.name)).slice(0, 3).filter(c => c.v < .75).map(c => SUGGEST[c.name]);
+  const verdict = grade >= 8.5 ? "Excelente negociação." : grade >= 7 ? "Aprovado. Boa negociação, com pontos a melhorar." : grade >= 5 ? "Regular. Revise os pontos abaixo." : "Reprovado. Vamos treinar o básico.";
+  return { day: r.day, customer: r.customer, product: r.product, sale: r.sale, price: r.price, profit, grade, criteria, obs, sug, verdict };
+}
+
+// ---- Progressão e missões
+const xpFor = l => l <= 1 ? 0 : 50 * (l - 1) * l;
+const levelFromXp = xp => { let l = 1; while (xp >= xpFor(l + 1)) l++; return l; };
+const titleFor = l => l <= 5 ? "Vendedor iniciante" : l <= 10 ? "Revendedor profissional" : l <= 20 ? "Empreendedor" : l <= 30 ? "Empresário" : "Magnata comercial";
+const UNLOCKS = [[2, "Mochila maior (14 itens)"], [3, "Depósito ampliado (100 itens) e bancada maior"], [4, "Mais pedidos prontos ao mesmo tempo (30)"], [5, "Mochila profissional (20 itens)"], [6, "Atacadista liberado: preços de atacado"], [8, "Depósito grande (200 itens)"]];
+const MISSIONS = [
+  ["comprar", "Primeiro estoque", "Compre um produto em um fornecedor.", 20, c => c.purchases >= 1],
+  ["embalar", "Caprichando", "Embale um pedido na bancada.", 25, c => c.packed >= 1],
+  ["vender", "Primeira venda", "Feche uma venda com um cliente.", 30, c => c.sales >= 1],
+  ["principal", "Negócio fechado", "Faça uma venda lucrativa e obtenha a aprovação do mestre (nota 7 ou mais).", 100, c => c.approved],
+  ["cinco", "Pegando o ritmo", "Feche 5 vendas.", 60, c => c.sales >= 5],
+  ["reputacao", "Bem falado", "Alcance reputação 60.", 60, c => c.rep >= 60],
+  ["lucro", "No azul", "Acumule R$ 300,00 de lucro direto em vendas.", 80, c => c.profit >= 30000],
+  ["excelencia", "Excelência", "Receba nota 8,5 ou mais do mestre.", 80, c => c.best >= 8.5],
+].map(([id, title, desc, xp, ok]) => ({ id, title, desc, xp, ok, main: id === "principal" }));
+
+/* =====================================================================
+   ESTADO
+   ===================================================================== */
+let S;
+function newState() {
+  return { v: SAVE_VERSION, money: 150000, xp: 0, day: 1, minutes: 480, rep: 50, inv: { backpack: {}, warehouse: {}, bench: {}, order: {} }, orders: [], nextOrder: 1, sales: [], nextSale: 1, ledger: [], suppliers: defaultSuppliers(), mentorPending: [], mentorHistory: [], memory: {}, missions: [], player: null };
+}
+const level = () => levelFromXp(S.xp);
+const hour = () => Math.floor(S.minutes / 60) % 24;
+const timeText = () => `${String(hour()).padStart(2, "0")}:${String(Math.floor(S.minutes) % 60).padStart(2, "0")}`;
+function ledger(type, amount, desc) { S.ledger.push({ day: S.day, type, amount, desc }); }
+function credit(c) { if (c <= 0) return false; S.money += c; return true; }
+function debit(c) { if (c <= 0 || c > S.money) return false; S.money -= c; return true; }
+
+function addXp(n, why) {
+  if (n <= 0) return; const before = level(); S.xp += n; const after = level();
+  for (let l = before + 1; l <= after; l++) { toast(`Nível ${l}! ${titleFor(l)}`); UNLOCKS.filter(u => u[0] === l).forEach(u => toast("Desbloqueado: " + u[1])); }
+  if (after !== before) refreshGates();
+}
+function checkMissions() {
+  const ctx = { purchases: S.ledger.filter(e => e.type === "compra").length, packed: S.ledger.filter(e => e.type === "embalagem").length, sales: S.sales.length, profit: S.sales.reduce((a, s) => a + profitOf(s), 0), rep: S.rep, best: S.mentorHistory.reduce((a, e) => Math.max(a, e.grade), 0), approved: S.mentorHistory.some(e => e.sale && e.grade >= 7 && e.profit > 0) };
+  for (const m of MISSIONS) if (!S.missions.includes(m.id) && m.ok(ctx)) { S.missions.push(m.id); toast(`Missão concluída: ${m.title} (+${m.xp} XP)`); addXp(m.xp, "missão"); }
+}
+const profitOf = s => s.price - s.fee - s.cost - s.mat - (s.refunded || 0);
+
+function buy(sup, id, q, unit) {
+  const it = sup.items[id];
+  if (!isOpen(sup, hour())) return "A loja está fechada agora.";
+  if (level() < it.lvl) return "Esse produto eu só vendo para revendedores mais experientes.";
+  if (q > it.stock) return "Não tenho essa quantidade em estoque.";
+  if (unit < floorPrice(sup, id, q)) return "Por esse preço eu não vendo.";
+  if (free("backpack") < q) return "Sua mochila está cheia. Guarde coisas no depósito.";
+  const total = unit * q;
+  if (!debit(total)) return "Hmm, parece que o dinheiro não dá.";
+  addStock("backpack", id, q, unit); it.stock -= q; sup.rel = Math.min(1, sup.rel + .01 * Math.min(q, 10));
+  ledger("compra", -total, `Compra: ${q}x ${P[id].name} (${sup.name})`);
+  addXp(5, "compra"); checkMissions(); save(); return null;
+}
+function finalizePack(input) {
+  const sc = evalPack(input); if (!sc.valid) return sc.problem;
+  const id = input.product.id, st = S.inv.bench[id];
+  if (!st) return "O produto não está na bancada.";
+  if (free("order") < 1) return "Limite de pedidos prontos atingido.";
+  if (!debit(sc.mat)) return "Dinheiro insuficiente para os materiais.";
+  const unitCost = Math.floor(st.total / st.qty);
+  transfer("bench", "order", id, 1);
+  const order = { id: `PED-${String(S.nextOrder++).padStart(3, "0")}`, product: id, cost: unitCost, score: sc };
+  S.orders.push(order); ledger("embalagem", -sc.mat, `Embalagem ${order.id}: ${P[id].name}`);
+  addXp(Math.round(5 + sc.overall * 20), "embalagem"); checkMissions(); save(); return order;
+}
+const saleRng = rng(777 + Date.now() % 1000);
+function completeSale(customer, id, price, packed) {
+  const p = P[id]; let order = null, cost;
+  if (packed) { order = S.orders.find(o => o.product === id); if (!order) return { err: "Você não tem esse pedido embalado." }; takeStock("order", id, 1); S.orders.splice(S.orders.indexOf(order), 1); cost = order.cost; }
+  else { const c = takeStock("backpack", id, 1); if (c === null) return { err: "Você não está com esse produto." }; cost = c; }
+  const fee = Math.round(price * .02); credit(price - fee);
+  const risk = packed ? order.score.risk : Math.min(.9, p.frag * .6 + .1);
+  const sale = { id: S.nextSale++, day: S.day, customer, product: id, price, fee, cost, mat: packed ? order.score.mat : 0, packed, packScore: packed ? order.score.overall : 0, risk, damaged: saleRng() < risk, resolved: false, refunded: 0 };
+  S.sales.push(sale); ledger("venda", price, `Venda #${sale.id}: ${p.name} para ${customer}`); ledger("taxa", -fee, `Taxa da venda #${sale.id}`);
+  if (sale.damaged) { S.rep = Math.max(0, S.rep - 4); mem(customer).complaints++; setTimeout(() => toast(`${customer} reclamou: o produto chegou avariado. Abra o Painel.`), 1800); }
+  else S.rep = Math.min(100, S.rep + (packed ? 2 : 1));
+  addXp(profitOf(sale) > 0 ? 20 + Math.min(30, Math.floor(profitOf(sale) / 200)) : 8, "venda");
+  checkMissions(); save(); return { sale };
+}
+function resolveComplaint(sale, kind) {
+  const refund = kind === "full" ? sale.price : kind === "half" ? Math.floor(sale.price / 2) : 0;
+  if (refund > 0 && !debit(refund)) return "Saldo insuficiente para o reembolso.";
+  sale.refunded = refund; sale.resolved = true; if (refund) ledger("reembolso", -refund, `Reembolso da venda #${sale.id}`);
+  S.rep = Math.max(0, Math.min(100, S.rep + (kind === "full" ? 3 : kind === "half" ? .5 : -8)));
+  if (kind === "deny") mem(sale.customer).unhappy++;
+  save(); return null;
+}
+function mem(name) { return S.memory[name] || (S.memory[name] = { purchases: 0, complaints: 0, unhappy: 0, lies: 0 }); }
+function trustBonus(name) { const r = S.memory[name]; if (!r) return 0; return Math.max(-.3, Math.min(.25, r.purchases * .06 - r.complaints * .12 - r.unhappy * .04 - r.lies * .1)); }
+function memoryGreeting(name) { const r = S.memory[name]; if (!r) return null; if (r.complaints) return "Da última vez o produto chegou com problema, hein..."; if (r.lies) return "Lembro de você. Espero que hoje seja tudo verdade."; if (r.purchases) return "Opa, você de novo! A última compra foi ótima."; return "Já nos falamos antes, né?"; }
+
+function endDay() {
+  const d = S.day; if (debit(2000)) ledger("aluguel", -2000, `Aluguel do depósito (dia ${d})`); else toast("Sem dinheiro para o aluguel do depósito hoje!");
+  for (const s of Object.values(S.suppliers)) for (const it of Object.values(s.items)) it.stock = Math.min(it.max, it.stock + it.restock);
+  const todays = S.sales.filter(s => s.day === d);
+  toast(`Fim do dia ${d}: ${todays.length} venda(s), lucro direto ${fmt(todays.reduce((a, s) => a + profitOf(s), 0))}. Fornecedores reabasteceram.`);
+  S.day++; S.minutes = 480; save();
+}
+
+function save() { try { if (player) S.player = { x: player.pos.x, z: player.pos.z, yaw: player.yaw }; localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* armazenamento indisponível */ } }
+function load() {
+  try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const d = JSON.parse(t); if (!d || d.v > SAVE_VERSION || d.money < 0) return null; const base = newState(); return Object.assign(base, d, { suppliers: Object.assign(base.suppliers, d.suppliers || {}) }); } catch (e) { return null; }
+}
+function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
+
+/* =====================================================================
+   INTERFACE
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+let panel = null;
+function toast(msg) { const el = document.createElement("div"); el.className = "toast"; el.textContent = msg; $("toasts").appendChild(el); setTimeout(() => el.remove(), 4500); while ($("toasts").children.length > 4) $("toasts").firstChild.remove(); }
+function openPanel(p) { panel = p; $("modal").hidden = false; if (document.pointerLockElement) document.exitPointerLock(); renderPanel(); }
+function closePanel() { const p = panel; panel = null; $("modal").hidden = true; $("modal").innerHTML = ""; if (p && p.onClose) p.onClose(); }
+function renderPanel() {
+  if (!panel) return;
+  const m = $("modal"), scrollTop = m.querySelector(".body")?.scrollTop || 0;
+  m.innerHTML = `<div class="panel" role="dialog" aria-label="${esc(panel.title())}"><header><h2>${esc(panel.title())}</h2>${panel.noClose ? "" : '<button data-a="close">Fechar</button>'}</header><div class="body">${panel.html()}</div></div>`;
+  m.querySelector(".body").scrollTop = scrollTop;
+  panel.after && panel.after(m);
+}
+$("modal").addEventListener("click", e => {
+  const b = e.target.closest("[data-a]"); if (!b || !panel) return;
+  if (b.dataset.a === "close") return closePanel();
+  panel.act && panel.act(b.dataset.a, b.dataset, b);
+  if (panel) renderPanel();
+});
+function meter(label, v, color) { return `<div class="meter"><span>${label}</span><div class="bar"><i style="width:${Math.round(v * 100)}%;background:${color}"></i></div><span class="num">${Math.round(v * 100)}%</span></div>`; }
+function priceCtl(val) { return `<div class="price"><button data-a="p" data-d="-1000">-10</button><button data-a="p" data-d="-100">-1</button><span class="val num">${fmt(val)}</span><button data-a="p" data-d="100">+1</button><button data-a="p" data-d="1000">+10</button></div>`; }
+
+// ---- Loja
+function ShopPanel(sup) {
+  let sel = null, qty = 1, offer = 0, agreed = 0, tries = 0, line = "Bom dia! Fique à vontade, qualquer coisa é só chamar.";
+  const choose = id => { sel = id; qty = 1; agreed = 0; tries = 0; offer = volPrice(sup, id, 1); line = `Esse ${P[id].name.toLowerCase()} sai por ${fmt(sup.items[id].price)} a unidade.`; };
+  return {
+    title: () => sup.name,
+    html() {
+      if (!isOpen(sup, hour())) return `<p>A loja está fechada agora. Horário: ${sup.open}h às ${sup.close}h.</p>`;
+      const list = Object.entries(sup.items).map(([id, it]) => {
+        const locked = level() < it.lvl;
+        return `<button class="${id === sel ? "sel" : ""}" data-a="sel" data-id="${id}" ${locked ? "disabled" : ""}><b>${esc(P[id].name)}</b><br><span class="small num">${fmt(it.price)} · estoque ${it.stock}${locked ? ` · nível ${it.lvl}` : ""}</span></button>`;
+      }).join("");
+      let deal = `<p><b>${esc(sup.clerk)}:</b> “${esc(line)}”</p>`;
+      if (sel) {
+        const p = P[sel], ask = volPrice(sup, sel, qty), unit = agreed || ask;
+        deal += `<div class="card"><b>${esc(p.name)}</b><span class="small">Preço de revenda no mercado: ~${fmt(p.ref)} · Fragilidade ${Math.round(p.frag * 100)}% · Caixa ${BOX[p.size]}</span>
+          <div class="row"><span>Quantidade</span><button data-a="q" data-d="-1">−</button><b class="num">${qty}</b><button data-a="q" data-d="1">+</button><span class="small">Mochila livre: ${free("backpack")}</span></div>
+          <span class="num">Preço pedido: ${fmt(ask)} /un${ask < sup.items[sel].price ? " (desconto por volume)" : ""}</span>
+          <span class="small">Sua proposta por unidade:</span>${priceCtl(offer)}
+          <div class="row"><button data-a="haggle">Propor preço</button>${agreed ? `<span class="good num">Combinado: ${fmt(agreed)} /un</span>` : ""}</div>
+          <span class="money2 num">Total: ${fmt(unit * qty)} · Saldo: ${fmt(S.money)}</span>
+          <button class="primary" data-a="buy">Comprar (${fmt(unit * qty)})</button></div>`;
+      } else deal += `<p class="small">Escolha um produto no catálogo.</p>`;
+      return `<div class="cols"><div class="list"><h3>Catálogo</h3>${list}</div><div class="list">${deal}</div></div>`;
+    },
+    act(a, d) {
+      if (a === "sel") choose(d.id);
+      if (a === "q") { qty = Math.max(1, Math.min(sup.items[sel].stock || 1, qty + +d.d)); agreed = 0; offer = volPrice(sup, sel, qty); }
+      if (a === "p") offer = Math.max(100, offer + +d.d);
+      if (a === "haggle") {
+        if (tries >= 3) { line = "Olha, já fiz o que dava. O preço é esse."; return; }
+        tries++; const r = evaluateOffer(sup, sel, qty, offer);
+        if (r.r === "accept") { agreed = r.price; line = `Fechado, faço por ${fmt(agreed)} cada.`; }
+        else if (r.r === "counter") { agreed = r.price; offer = r.price; line = `Assim não dá... consigo fazer por ${fmt(r.price)}.`; }
+        else line = "Esse valor nem cobre o meu custo. Não dá.";
+      }
+      if (a === "buy") {
+        const unit = agreed || volPrice(sup, sel, qty), err = buy(sup, sel, qty, unit);
+        if (err) line = err; else { toast(`Comprou ${qty}x ${P[sel].name} por ${fmt(unit * qty)}`); line = "Obrigado! Volte sempre."; agreed = 0; tries = 0; }
+      }
+    }
+  };
+}
+
+// ---- Mochila / Depósito
+function InvPanel(other) {
+  const col = (loc, to) => {
+    const items = Object.entries(S.inv[loc]);
+    return `<div class="list"><h3>${LOC[loc]} (${used(loc)}/${capsFor(level())[loc]})</h3>${items.length ? items.map(([id, s]) => `<div class="card"><b>${s.qty}x ${esc(P[id].name)}</b><span class="small num">custo médio ${fmt(Math.floor(s.total / s.qty))}</span>${to ? `<div class="row"><button data-a="mv" data-from="${loc}" data-to="${to}" data-id="${id}" data-n="1">1 → ${LOC[to]}</button><button data-a="mv" data-from="${loc}" data-to="${to}" data-id="${id}" data-n="${s.qty}">Tudo</button></div>` : ""}</div>`).join("") : '<p class="small">Vazio.</p>'}</div>`;
+  };
+  return {
+    title: () => other ? `Mochila ↔ ${LOC[other]}` : "Mochila",
+    html: () => other ? `<div class="cols">${col("backpack", other)}${col(other, "backpack")}</div>` : `<div class="cols">${col("backpack")}<div class="list"><h3>Pedidos prontos</h3>${S.orders.length ? S.orders.map(o => `<div class="card"><b>${o.id}: ${esc(P[o.product].name)}</b><span class="small">embalagem ${(o.score.overall * 10).toFixed(1)}/10 · risco ${Math.round(o.score.risk * 100)}%</span></div>`).join("") : '<p class="small">Nenhum pedido embalado.</p>'}</div></div>`,
+    act(a, d) { if (a === "mv" && !transfer(d.from, d.to, d.id, +d.n)) toast(`Não cabe em ${LOC[d.to]}.`); save(); }
+  };
+}
+
+// ---- Bancada (minigame)
+function BenchPanel() {
+  const STEPS = ["Produto", "Inspeção", "Caixa", "Posicionar", "Proteção", "Fechar", "Fita", "Etiqueta", "Confirmar"];
+  let step = 0, input = null, t0 = 0, views = 0, flaps = 0, msg = "", pos = null, lab = null;
+  const begin = id => { input = { product: P[id], inspected: false, box: 0, pad: 0, offset: 1, closed: false, tape: [], label: false, labelAcc: 0, secs: 0 }; t0 = performance.now(); views = 0; flaps = 0; msg = ""; pos = null; lab = null; step = 1; };
+  const W = 520, H = 360;
+  const boxRect = () => { const s = [.55, .75, .95][input.box]; const w = Math.min(W, H * 1.3) * s, h = w * .7; return { x: (W - w) / 2, y: (H - h) / 2, w, h }; };
+  const prodSize = b => { const r = .62 * Math.pow(.73, input.box - input.product.size); return { w: b.w * r, h: b.h * r }; };
+  const labTarget = b => ({ x: b.x + b.w * .08, y: b.y + b.h * .1, w: b.w * .32, h: b.h * .22 });
+  function draw(cv) {
+    const g = cv.getContext("2d"); cv.width = W; cv.height = H; g.clearRect(0, 0, W, H);
+    const b = boxRect();
+    g.fillStyle = "#7a5634"; g.fillRect(b.x - 6, b.y - 6, b.w + 12, b.h + 12);
+    g.fillStyle = step >= 6 ? "#c79a5e" : "#5e4328"; g.fillRect(b.x, b.y, b.w, b.h);
+    if (step >= 4 && step < 6) for (let i = 0; i < input.pad; i++) { g.strokeStyle = "rgba(190,230,255,.55)"; g.lineWidth = 5; const k = 6 + i * 7; g.strokeRect(b.x + k, b.y + k, b.w - 2 * k, b.h - 2 * k); }
+    if (step < 6) { const s = prodSize(b); g.fillStyle = "#40507a"; g.fillRect(pos.x - s.w / 2, pos.y - s.h / 2, s.w, s.h); g.fillStyle = "#e9e3d6"; g.font = "14px Figtree, sans-serif"; g.fillText(input.product.name.slice(0, 22), pos.x - s.w / 2 + 6, pos.y + 5); }
+    if (step === 5) { g.fillStyle = "#c79a5e"; if (flaps >= 1) g.fillRect(b.x, b.y, b.w / 2, b.h); if (flaps >= 2) g.fillRect(b.x + b.w / 2, b.y, b.w / 2, b.h); }
+    if (step >= 6) {
+      const sy = b.y + b.h / 2; g.fillStyle = "#3a2a18"; for (let x = b.x; x < b.x + b.w; x += 16) g.fillRect(x, sy - 1, 8, 2);
+      input.tape.forEach((q, i) => { g.fillStyle = "rgba(225,200,135,.85)"; g.fillRect(b.x, sy - 10 + i * 3, b.w * q, 14); });
+      if (drag && drag.tape) { g.fillStyle = "rgba(240,215,150,.6)"; g.fillRect(drag.min, sy - 7, drag.max - drag.min, 14); }
+    }
+    if (step === 7) {
+      const t = labTarget(b); g.setLineDash([6, 5]); g.strokeStyle = "#f2b632"; g.lineWidth = 2; g.strokeRect(t.x, t.y, t.w, t.h); g.setLineDash([]);
+      g.fillStyle = "#f7f5ef"; g.fillRect(lab.x - t.w / 2, lab.y - t.h / 2, t.w, t.h); g.fillStyle = "#333"; g.font = "12px Figtree, sans-serif"; g.fillText("PED · DealMaster", lab.x - t.w / 2 + 6, lab.y);
+    }
+  }
+  let drag = null;
+  function pointer(cv) {
+    const toXY = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; };
+    cv.onpointerdown = e => {
+      cv.setPointerCapture(e.pointerId); const p = toXY(e), b = boxRect();
+      if (step === 3) { const s = prodSize(b); if (Math.abs(p.x - pos.x) < s.w / 2 && Math.abs(p.y - pos.y) < s.h / 2) drag = { off: { x: pos.x - p.x, y: pos.y - p.y } }; }
+      else if (step === 6 && input.tape.length < 5 && p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) drag = { tape: true, min: p.x, max: p.x, dev: 0, n: 0 };
+      else if (step === 7) { const t = labTarget(b); if (Math.abs(p.x - lab.x) < t.w / 2 && Math.abs(p.y - lab.y) < t.h / 2) drag = { off: { x: lab.x - p.x, y: lab.y - p.y } }; }
+    };
+    cv.onpointermove = e => {
+      if (!drag) return; const p = toXY(e), b = boxRect();
+      if (drag.tape) { const x = Math.max(b.x, Math.min(b.x + b.w, p.x)); drag.min = Math.min(drag.min, x); drag.max = Math.max(drag.max, x); drag.dev += Math.abs(p.y - (b.y + b.h / 2)); drag.n++; }
+      else if (step === 3) { const s = prodSize(b); pos = { x: Math.max(b.x + s.w / 2, Math.min(b.x + b.w - s.w / 2, p.x + drag.off.x)), y: Math.max(b.y + s.h / 2, Math.min(b.y + b.h - s.h / 2, p.y + drag.off.y)) }; }
+      else if (step === 7) lab = { x: p.x + drag.off.x, y: p.y + drag.off.y };
+      draw(cv); updateInfo();
+    };
+    cv.onpointerup = () => {
+      if (drag && drag.tape) { const b = boxRect(), cov = (drag.max - drag.min) / b.w, straight = clamp01(1 - (drag.n ? drag.dev / drag.n : 99) / 40); if (cov > .1) input.tape.push(clamp01(cov) * straight); drag = null; renderPanel(); return; }
+      drag = null; renderPanel();
+    };
+  }
+  function updateInfo() {
+    const b = boxRect();
+    if (step === 3) { input.offset = clamp01(Math.max(Math.abs(pos.x - (b.x + b.w / 2)) / (b.w / 2), Math.abs(pos.y - (b.y + b.h / 2)) / (b.h / 2))); const el = document.getElementById("pinfo"); if (el) el.textContent = `Distância do centro: ${Math.round(input.offset * 100)}%`; }
+    if (step === 7) { const t = labTarget(b), l = { x: lab.x - t.w / 2, y: lab.y - t.h / 2 }; const ox = Math.max(0, Math.min(l.x + t.w, t.x + t.w) - Math.max(l.x, t.x)), oy = Math.max(0, Math.min(l.y + t.h, t.y + t.h) - Math.max(l.y, t.y)); input.labelAcc = clamp01(ox * oy / (t.w * t.h)); const el = document.getElementById("pinfo"); if (el) el.textContent = `Alinhamento: ${Math.round(input.labelAcc * 100)}%`; }
+  }
+  return {
+    title: () => "Bancada de embalagem",
+    html() {
+      const steps = `<div class="steps">${STEPS.map((s, i) => `<span class="${i === step ? "on" : i < step ? "done" : ""}">${i < step ? "✓ " : ""}${s}</span>`).join("")}</div>`;
+      const m = msg ? `<p class="bad">${esc(msg)}</p>` : "";
+      if (step === 0) {
+        const bench = Object.entries(S.inv.bench), bag = Object.entries(S.inv.backpack);
+        return steps + m + `<div class="cols"><div class="list"><h3>Na bancada</h3>${bench.length ? bench.map(([id, s]) => `<button data-a="begin" data-id="${id}">Embalar: ${esc(P[id].name)} (${s.qty})</button>`).join("") : '<p class="small">Nada na bancada. Traga um produto da mochila.</p>'}<p class="good">Pedidos prontos para venda: ${S.orders.length}</p></div>
+          <div class="list"><h3>Na mochila</h3>${bag.length ? bag.map(([id, s]) => `<button data-a="tobench" data-id="${id}">Colocar na bancada: ${esc(P[id].name)} (${s.qty})</button>`).join("") : '<p class="small">Mochila vazia. Compre produtos nas lojas.</p>'}</div></div>`;
+      }
+      const p = input.product, side = c => `<div class="cols"><div class="list">${c}</div><div><canvas class="work" id="work"></canvas></div></div>`;
+      if (step === 1) return steps + m + side(`<p>Inspecione o ${esc(p.name.toLowerCase())} antes de embalar.</p>${["Frente: sem riscos.", "Laterais: encaixes firmes.", "Fundo: lacre de fábrica ok."].slice(0, views).map(v => `<p class="good">✓ ${v}</p>`).join("")}${views < 3 ? '<button data-a="look">Girar e inspecionar</button><button data-a="skip">Pular inspeção</button>' : '<button class="primary" data-a="next">Próximo: escolher caixa</button>'}`);
+      if (step === 2) return steps + m + side(`<p>Fragilidade do produto: ${Math.round(p.frag * 100)}%. Escolha o tamanho da caixa.</p>${[0, 1, 2].map(i => `<button data-a="box" data-i="${i}">Caixa ${BOX[i]} · ${fmt(BOX_COST[i])}</button>`).join("")}`);
+      if (step === 3) return steps + m + side(`<p>Arraste o produto para o centro da caixa.</p><p class="small" id="pinfo">Distância do centro: ${Math.round(input.offset * 100)}%</p><button class="primary" data-a="next">Próximo: proteção</button>`);
+      if (step === 4) return steps + m + side(`<p>Adicione plástico bolha. Produtos frágeis e caixas folgadas precisam de mais proteção.</p><div class="row"><span>Plástico bolha</span><button data-a="pad" data-d="-1">−</button><b class="num">${input.pad}</b><button data-a="pad" data-d="1">+</button></div><span class="small">${fmt(PAD_COST)} por folha</span><button class="primary" data-a="next">Próximo: fechar caixa</button>`);
+      if (step === 5) return steps + m + side(`<p>Dobre as abas para fechar a caixa.</p>${flaps < 2 ? `<button data-a="flap">Dobrar aba ${flaps ? "direita" : "esquerda"}</button>` : '<button class="primary" data-a="next">Próximo: fita</button>'}`);
+      if (step === 6) return steps + m + side(`<p>Arraste ao longo da emenda (linha tracejada), de uma ponta à outra. Duas tiras bem retas costumam bastar.</p><p class="small">Tiras: ${input.tape.length}/5${input.tape.length ? ` · última: ${Math.round(input.tape[input.tape.length - 1] * 100)}%` : ""}</p>${input.tape.length ? '<button data-a="undo">Desfazer última tira</button><button class="primary" data-a="next">Próximo: etiqueta</button>' : ""}`);
+      if (step === 7) return steps + m + side(`<p>Arraste a etiqueta até a área marcada e cole.</p><p class="small" id="pinfo">Alinhamento: ${Math.round(input.labelAcc * 100)}%</p><button class="primary" data-a="label">Colar etiqueta</button>`);
+      const sc = evalPack(input);
+      if (!sc.valid) return steps + `<p class="bad">${esc(sc.problem)}</p><button data-a="redo">Refazer</button>`;
+      const rows = [["Proteção", sc.protection], ["Integridade (fita)", sc.integrity], ["Tamanho da caixa", sc.sizeFit], ["Apresentação", sc.presentation], ["Uso de material", sc.efficiency], ["Tempo", sc.time]];
+      return steps + m + `<div class="cols"><div class="list"><h3>${esc(p.name)}</h3>${rows.map(([l, v]) => meter(l, v, v > .7 ? "var(--good)" : v > .4 ? "var(--sign)" : "var(--bad)")).join("")}</div>
+        <div class="list"><span class="grade">${(sc.overall * 10).toFixed(1)}/10</span><span class="num">Materiais: ${fmt(sc.mat)}</span><span class="${sc.risk > .2 ? "bad" : "good"}">Risco de avaria na entrega: ${Math.round(sc.risk * 100)}%</span><span class="small">Tempo: ${Math.round(input.secs)} s</span><button class="primary" data-a="confirm">Confirmar pedido</button><button data-a="redo">Desfazer e refazer</button></div></div>`;
+    },
+    after(m) {
+      const cv = m.querySelector("#work"); if (!cv) return;
+      const b = boxRect();
+      if (!pos) { const s = prodSize(b); pos = { x: b.x + 20 + s.w / 2, y: b.y + 20 + s.h / 2 }; }
+      if (step === 7 && !lab) lab = { x: b.x + b.w - 60, y: b.y + b.h - 34 };
+      draw(cv); pointer(cv);
+    },
+    act(a, d) {
+      msg = "";
+      if (a === "tobench" && !transfer("backpack", "bench", d.id, 1)) msg = "A bancada está cheia.";
+      if (a === "begin") begin(d.id);
+      if (a === "look") views++;
+      if (a === "skip") { input.inspected = false; step = 2; }
+      if (a === "next") { if (step === 1) input.inspected = true; if (step === 5) input.closed = true; step++; }
+      if (a === "box") { const i = +d.i; if (i < input.product.size) msg = "O produto não cabe nessa caixa."; else { input.box = i; pos = null; step = 3; } }
+      if (a === "pad") input.pad = Math.max(0, Math.min(6, input.pad + +d.d));
+      if (a === "flap") flaps++;
+      if (a === "undo") input.tape.pop();
+      if (a === "label") { if (input.labelAcc < .2) msg = "A etiqueta precisa ficar sobre a caixa."; else { input.label = true; input.secs = (performance.now() - t0) / 1000; step = 8; } }
+      if (a === "redo") begin(input.product.id);
+      if (a === "confirm") { const r = finalizePack(input); if (typeof r === "string") msg = r; else { toast(`Pedido ${r.id} pronto: ${input.product.name}`); step = 0; input = null; } }
+      save();
+    }
+  };
+}
+
+// ---- Negociação
+function NegotiationPanel(agent) {
+  const c = agent.brain, chat = [];
+  let pid = null, packed = false, args = [], price = 10000, last = 0, ended = false, liesSeen = 0;
+  const add = (who, l) => l && chat.push({ who, l });
+  const g = memoryGreeting(agent.name); if (g) add(agent.name, g);
+  const avail = () => { const l = S.orders.reduce((a, o) => { a[o.product] = (a[o.product] || 0) + 1; return a; }, {}); const out = Object.entries(l).map(([id, n]) => ({ id, packed: true, n })); for (const [id, s] of Object.entries(S.inv.backpack)) if (!l[id]) out.push({ id, packed: false, n: s.qty }); return out; };
+  function finish(sale) {
+    if (ended) return; ended = true; let s = null;
+    if (sale) { const r = completeSale(agent.name, pid, c.agreed, packed); if (r.err) { add("Sistema", r.err); sale = false; } else { s = r.sale; mem(agent.name).purchases++; toast(`Venda concluída: ${fmt(s.price)} (lucro ${fmt(profitOf(s))})`); } }
+    else if (c.finished) mem(agent.name).unhappy++;
+    if (pid || c.mem.length >= 2) S.mentorPending.push({ day: S.day, customer: agent.name, need: c.need, product: pid, productCat: pid ? P[pid].cat : null, ref: pid ? P[pid].ref : 0, cost: s ? s.cost : pid ? P[pid].cost : 0, mat: s ? s.mat : 0, fee: s ? s.fee : 0, sale: !!s, price: s ? s.price : 0, packed: s ? s.packed : packed, packScore: s ? s.packScore : 0, trust: c.trust, final: c.state, events: c.mem.slice() });
+    save();
+  }
+  function act(me, resp) {
+    add("Você", me); add(agent.name, resp.line);
+    const caught = c.mem.filter(e => e.type === "lieCaught").length; if (caught > liesSeen) { mem(agent.name).lies++; liesSeen = caught; }
+    if (c.state === "accepted") finish(true); else if (c.finished) finish(false);
+  }
+  return {
+    title: () => `Conversa com ${agent.name}`,
+    onClose() { if (!c.finished && pid) c.end(); if (!ended && c.mem.length) finish(false); agent.talking = false; if (c.finished) agent.leaving = true; },
+    html() {
+      const bars = meter("Confiança", c.trust, "var(--info)") + meter("Interesse", c.interest, "var(--sign)") + meter("Paciência", c.patience / c.t.patience, "var(--good)");
+      const log = `<div class="chat" id="chat">${chat.map(x => `<div class="${x.who === "Você" ? "me" : "them"}"><b>${esc(x.who)}:</b> ${esc(x.l)}</div>`).join("")}</div>`;
+      let right;
+      if (c.finished) {
+        const t = c.state === "accepted" ? `Negócio fechado: ${fmt(c.agreed)}` : c.state === "rejected" ? "O cliente recusou." : "O cliente foi embora.";
+        right = `<h3>${t}</h3><p class="small">A conversa foi registrada. Visite o Mestre Negociador para receber a avaliação.</p><button class="primary" data-a="close">Sair</button>`;
+      } else if (c.state === "thinking") {
+        right = `<p>${esc(agent.name)} está pensando...</p><button class="primary" data-a="wait">Aguardar a resposta</button>`;
+      } else {
+        const prods = avail();
+        right = `<div class="row"><button data-a="greet">Cumprimentar</button><button data-a="ask">Perguntar o que procura</button></div>
+          <h3>Apresentar produto</h3>${prods.length ? prods.map(o => `<button class="${o.id === pid ? "sel" : ""}" data-a="show" data-id="${o.id}" data-packed="${o.packed ? 1 : 0}">${esc(P[o.id].name)} (${o.n})${o.packed ? "" : " · sem embalagem"}</button>`).join("") : '<p class="small">Você não tem produtos com você.</p>'}`;
+        if (pid) right += `<h3>Argumentos</h3>${args.map((x, i) => `<button data-a="arg" data-i="${i}" ${c.used.has(x[0]) ? "disabled" : ""}>“${esc(x[0])}”</button>`).join("")}
+          <div class="row"><button data-a="answer">Responder dúvida</button><button data-a="press">Pressionar</button></div>
+          ${priceCtl(price)}<div class="row"><button class="primary" data-a="propose">Propor preço</button><button data-a="takeCounter" ${c.counter ? "" : "disabled"}>${c.counter ? `Aceitar ${fmt(c.counter)}` : "Aceitar contraproposta"}</button></div>`;
+        right += `<button data-a="end">Encerrar conversa</button>`;
+      }
+      return `<p class="small">${esc(agent.name)} · cliente ${ARCH[c.arch].label}</p><div class="cols"><div class="list">${bars}${log}</div><div class="list">${right}</div></div>`;
+    },
+    after(m) { const ch = m.querySelector("#chat"); if (ch) ch.scrollTop = ch.scrollHeight; },
+    act(a, d) {
+      if (a === "greet") act("Olá! Tudo bem? Posso ajudar?", c.greet());
+      if (a === "ask") act("O que você está procurando hoje?", c.askNeeds());
+      if (a === "show") { pid = d.id; packed = d.packed === "1"; const p = P[pid]; price = p.ref; const r = rng(hash(pid)); args = p.ben.map(b => [b, true]).concat(p.exa.map(e => [e, false])).map(x => [x, r()]).sort((a, b) => a[1] - b[1]).map(x => x[0]); act(`Dá uma olhada nesse ${p.name.toLowerCase()}.`, c.present(p)); }
+      if (a === "arg") { const [t, ok] = args[+d.i]; act(t + ".", c.explain(t, ok)); }
+      if (a === "answer") act("Entendo sua dúvida. Tem garantia e você pode testar aqui.", c.answer());
+      if (a === "press") act("É agora ou nunca, essa oferta acaba hoje!", c.pressure());
+      if (a === "p") price = Math.max(100, price + +d.d);
+      if (a === "propose") { last = price; act(`Faço por ${fmt(price)}.`, c.propose(price)); }
+      if (a === "takeCounter") act("Combinado!", c.acceptCounter());
+      if (a === "wait") act("(aguarda com calma)", c.reconsider(last));
+      if (a === "end") act("Tudo bem, obrigado pelo seu tempo.", c.end());
+    }
+  };
+}
+
+// ---- Mestre
+function MentorPanel() {
+  let showing = null, tab = "a";
+  const evalView = e => `<div class="cols"><div class="list"><b>${esc(e.customer)} · ${e.product ? esc(P[e.product].name) : "nenhum produto"}</b><span class="grade ${e.grade >= 7 ? "good" : "bad"}">${e.grade.toFixed(1)}/10</span><p>${esc(e.verdict)}</p>${e.criteria.map(c => meter(c.name, c.v, c.v >= .75 ? "var(--good)" : c.v >= .45 ? "var(--sign)" : "var(--bad)")).join("")}</div>
+      <div class="list"><h3>O que eu observei</h3>${e.obs.map(o => `<p>• ${esc(o)}</p>`).join("")}<h3>Para a próxima</h3>${e.sug.length ? e.sug.map(s => `<p class="good">→ ${esc(s)}</p>`).join("") : '<p class="good">Continue assim.</p>'}</div></div>`;
+  return {
+    title: () => "Mestre Otávio · Mestre Negociador",
+    html() {
+      const tabs = `<div class="tabs"><button class="${tab === "a" ? "sel" : ""}" data-a="tab" data-t="a">Análise</button><button class="${tab === "h" ? "sel" : ""}" data-a="tab" data-t="h">Histórico</button></div>`;
+      if (tab === "h") {
+        const h = S.mentorHistory, avg = h.length ? (h.slice(-5).reduce((a, e) => a + e.grade, 0) / Math.min(5, h.length)).toFixed(1) : "–";
+        const bars = h.slice(-20).map(e => `<i title="${e.grade}" style="height:${e.grade * 10}%;background:${e.grade >= 7 ? "var(--good)" : "var(--bad)"};width:18px;border-radius:3px 3px 0 0;display:block"></i>`).join("");
+        return tabs + `<h3>Avaliações: ${h.length} · Média recente: ${avg}</h3><div style="display:flex;gap:4px;align-items:flex-end;height:120px;background:#0003;border-radius:8px;padding:8px">${bars}</div>${h.slice().reverse().map((e, i) => `<button data-a="see" data-i="${h.length - 1 - i}">Dia ${e.day} · ${esc(e.customer)} · ${e.product ? esc(P[e.product].name) : "—"} · nota ${e.grade.toFixed(1)}</button>`).join("")}`;
+      }
+      if (showing) return tabs + evalView(showing) + `<button class="primary" data-a="next">${S.mentorPending.length ? "Próxima negociação" : "Voltar"}</button>`;
+      const n = S.mentorPending.length;
+      return tabs + `<p>${n ? `“Acompanhei ${n} negociação(ões) suas. Vamos analisar uma de cada vez.”` : "“Ainda não vi nenhuma negociação sua. Vá até a praça, converse com os clientes e volte aqui.”"}</p>${S.mentorPending.slice(0, 6).map(r => `<p class="small">• Dia ${r.day}: ${esc(r.customer)} · ${r.product ? esc(P[r.product].name) : "nenhum produto"} · ${r.sale ? `venda por ${fmt(r.price)}` : "sem venda"}</p>`).join("")}${n ? '<button class="primary" data-a="review">Analisar próxima negociação</button>' : ""}`;
+    },
+    act(a, d) {
+      if (a === "tab") { tab = d.t; showing = null; }
+      if (a === "review" || (a === "next" && S.mentorPending.length)) { const r = S.mentorPending.shift(); showing = evaluate(r); S.mentorHistory.push(showing); addXp(Math.round(showing.grade * 6), "avaliação"); checkMissions(); save(); }
+      else if (a === "next") showing = null;
+      if (a === "see") { showing = S.mentorHistory[+d.i]; tab = "a"; }
+    }
+  };
+}
+
+// ---- Painel
+function MainPanel() {
+  let tab = S.sales.some(s => s.damaged && !s.resolved) ? "rec" : "prog", msg = "";
+  return {
+    title: () => "Painel do negócio",
+    html() {
+      const T = [["prog", "Progresso"], ["res", "Resumo"], ["ven", "Vendas"], ["cx", "Caixa"], ["rec", "Reclamações"]];
+      let h = `<div class="tabs">${T.map(([k, l]) => `<button class="${tab === k ? "sel" : ""}" data-a="tab" data-t="${k}">${l}</button>`).join("")}</div>`;
+      if (msg) h += `<p class="bad">${esc(msg)}</p>`;
+      const lv = level();
+      if (tab === "prog") {
+        const cur = xpFor(lv), nxt = xpFor(lv + 1);
+        h += `<h3>Nível ${lv} · ${titleFor(lv)}</h3><div class="bar"><i style="width:${(S.xp - cur) / (nxt - cur) * 100}%;background:var(--info)"></i></div><span class="small num">${S.xp} XP · faltam ${nxt - S.xp} para o nível ${lv + 1}</span>
+          <div class="cols"><div class="list"><h3>Missões</h3>${MISSIONS.map(m => `<p class="${S.missions.includes(m.id) ? "good" : ""}">${S.missions.includes(m.id) ? "✓" : m.main ? "★" : "•"} <b>${m.title}</b> (+${m.xp} XP)<br><span class="small">${m.desc}</span></p>`).join("")}</div>
+          <div class="list"><h3>Desbloqueios</h3>${UNLOCKS.map(([l, d]) => `<p class="${lv >= l ? "good" : "small"}">${lv >= l ? "✓" : `Nível ${l}:`} ${d}</p>`).join("")}</div></div>`;
+      }
+      if (tab === "res") {
+        const sum = t => S.ledger.filter(e => e.type === t).reduce((a, e) => a + e.amount, 0);
+        const profit = S.sales.reduce((a, s) => a + profitOf(s), 0);
+        const rows = [["Caixa atual", fmt(S.money)], ["Valor em estoque (custo)", fmt(stockValue())], ["Receita de vendas", fmt(sum("venda") + sum("reembolso"))], ["Compras de mercadoria", fmt(-sum("compra"))], ["Despesas (embalagem, taxas, aluguel)", fmt(-(sum("embalagem") + sum("taxa") + sum("aluguel")))], ["Lucro direto das vendas", fmt(profit)], ["Vendas realizadas", S.sales.length], ["Reputação", `${Math.round(S.rep)}/100`]];
+        h += `<div class="list">${rows.map(([a, b]) => `<div class="row"><span class="grow">${a}</span><b class="num money2">${b}</b></div>`).join("")}</div><div class="row"><button data-a="save">Salvar agora</button><button data-a="reset">Começar do zero</button></div>`;
+      }
+      if (tab === "ven") h += S.sales.length ? S.sales.slice().reverse().map(s => `<div class="card"><b>#${s.id} · Dia ${s.day} · ${esc(P[s.product].name)} para ${esc(s.customer)}</b><span class="small num">preço ${fmt(s.price)} · embalagem ${s.packed ? (s.packScore * 10).toFixed(1) + "/10" : "nenhuma"}${s.damaged ? " · AVARIADO" : ""}</span><span class="num ${profitOf(s) >= 0 ? "good" : "bad"}">lucro ${fmt(profitOf(s))}</span></div>`).join("") : '<p class="small">Nenhuma venda ainda.</p>';
+      if (tab === "cx") h += S.ledger.length ? `<div class="list">${S.ledger.slice().reverse().map(e => `<div class="row small"><span class="grow">Dia ${e.day} · ${esc(e.desc)}</span><span class="num ${e.amount >= 0 ? "good" : "bad"}">${fmt(e.amount)}</span></div>`).join("")}</div>` : '<p class="small">Sem movimentações.</p>';
+      if (tab === "rec") { const p = S.sales.filter(s => s.damaged && !s.resolved); h += p.length ? p.map(s => `<div class="card"><p>${esc(s.customer)}: “O ${esc(P[s.product].name.toLowerCase())} chegou avariado!” (venda #${s.id}, ${fmt(s.price)})</p><div class="row"><button data-a="res" data-id="${s.id}" data-k="full">Reembolso total</button><button data-a="res" data-id="${s.id}" data-k="half">Reembolsar metade</button><button data-a="res" data-id="${s.id}" data-k="deny">Recusar</button></div></div>`).join("") : '<p class="good">Nenhuma reclamação pendente.</p>'; }
+      return h;
+    },
+    act(a, d) {
+      msg = "";
+      if (a === "tab") tab = d.t;
+      if (a === "res") msg = resolveComplaint(S.sales.find(s => s.id === +d.id), d.k) || "";
+      if (a === "save") { save(); toast("Jogo salvo."); }
+      if (a === "reset") { panel.noClose = false; openPanel(ConfirmReset()); }
+    }
+  };
+}
+function ConfirmReset() { return { title: () => "Começar do zero?", html: () => `<p>Isso apaga o jogo salvo neste navegador.</p><div class="row"><button class="primary" data-a="yes">Apagar e recomeçar</button><button data-a="close">Cancelar</button></div>`, act(a) { if (a === "yes") { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} S = newState(); resetWorld(); closePanel(); openPanel(StartPanel()); } } }; }
+
+function StartPanel() {
+  let help = false;
+  return {
+    noClose: true,
+    title: () => "DealMaster · Negócio Fechado",
+    html() {
+      if (help) return `<div class="list"><p><b>Objetivo:</b> comprar barato, embalar bem, vender com lucro e de forma honesta.</p>
+        <p><b>1. Comprar:</b> entre na Eletro Centro ou na Casa dos Acessórios (lado norte da rua) e fale com o vendedor. Dá para pechinchar.</p>
+        <p><b>2. Guardar e embalar:</b> no seu depósito (lado sul), use a estante e a bancada. Inspecione, escolha a caixa, proteja, passe fita e etiquete.</p>
+        <p><b>3. Vender:</b> converse com os clientes na praça. Pergunte o que procuram, apresente o produto certo, use argumentos verdadeiros e negocie.</p>
+        <p><b>4. Mestre:</b> no escritório do Mestre Negociador, receba a nota de cada negociação.</p>
+        <p class="small"><b>PC:</b> clique na tela para controlar · <kbd>WASD</kbd> mover · mouse olhar · <kbd>Shift</kbd> correr · <kbd>E</kbd> interagir · <kbd>Tab</kbd> mochila · <kbd>F</kbd> painel · <kbd>Esc</kbd> soltar o mouse</p>
+        <p class="small"><b>Celular:</b> arraste à esquerda para andar, à direita para olhar · botões Interagir, Mochila e Painel</p>
+        <button data-a="back">Voltar</button></div>`;
+      return `<div class="list"><span class="start-hero">Negócio<br>Fechado</span><p>Você começa com <b class="money2">R$ 1.500,00</b> e um depósito. Compre mercadorias, embale com capricho, negocie de verdade com os clientes e mostre ao Mestre Negociador que sabe vender.</p>
+        <div class="row">${hasSave() ? '<button class="primary" data-a="cont">Continuar</button>' : ""}<button class="${hasSave() ? "" : "primary"}" data-a="new">${hasSave() ? "Novo jogo (apaga o salvo)" : "Começar"}</button><button data-a="help">Como jogar</button></div>
+        <p class="small">Missão principal: faça uma venda lucrativa e seja aprovado pelo mestre.</p></div>`;
+    },
+    act(a) {
+      if (a === "help") help = true; if (a === "back") help = false;
+      if (a === "cont") { const d = load(); if (d) { S = d; resetWorld(); } closePanel(); }
+      if (a === "new") { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} S = newState(); resetWorld(); closePanel(); toast("Missão principal: faça uma venda lucrativa e seja aprovado pelo mestre."); }
+    }
+  };
+}
+
+function renderHud() {
+  const pend = S.sales.filter(s => s.damaged && !s.resolved).length;
+  $("hud").innerHTML = `<span class="money num">${fmt(S.money)}</span><span class="line num">Dia ${S.day} · ${timeText()} · Nível ${level()} (${titleFor(level())})</span><span class="line num">Mochila ${used("backpack")}/${capsFor(level()).backpack} · Pedidos prontos ${S.orders.length} · Reputação ${Math.round(S.rep)}</span>${S.mentorPending.length ? `<span class="line">Mestre: ${S.mentorPending.length} negociação(ões) para analisar</span>` : ""}${pend ? `<span class="line warn">${pend} reclamação(ões): abra o Painel</span>` : ""}`;
+}
+
+/* =====================================================================
+   MUNDO 3D
+   ===================================================================== */
+const isTouch = matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+let renderer, scene, camera, sun, hemi, player, colliders = [], interactables = [], customers = [], gateMesh, lampLights = [];
+const ray = new THREE.Raycaster();
+const mats = {};
+const mat = (hex, rough = .8) => mats[hex + rough] || (mats[hex + rough] = new THREE.MeshStandardMaterial({ color: hex, roughness: rough }));
+function box(x, y, z, w, h, d, color, solid = true, parent = scene) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color)); m.position.set(x, y, z); m.castShadow = !isTouch; m.receiveShadow = true; parent.add(m);
+  if (solid) colliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2, mesh: m });
+  return m;
+}
+function textTexture(text, bg, fg, w = 512, h = 128, font = "64px Bungee, Impact, sans-serif") {
+  const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d");
+  if (bg) { g.fillStyle = bg; g.fillRect(0, 0, w, h); } g.fillStyle = fg; g.textAlign = "center"; g.textBaseline = "middle";
+  // Reduz a fonte até o texto caber na placa.
+  let size = parseInt(font.match(/(\d+)px/)[1], 10);
+  do { g.font = font.replace(/\d+px/, size + "px"); size -= 2; } while (g.measureText(text).width > w * .92 && size > 10);
+  g.fillText(text, w / 2, h / 2 + 4);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+function sign(text, x, y, z, rotY, w = 5) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, w / 4), new THREE.MeshBasicMaterial({ map: textTexture(text, "#f2b632", "#2a1d05") }));
+  m.position.set(x, y, z); m.rotation.y = rotY; scene.add(m); return m;
+}
+function label(text, color = "#ffffff") {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: textTexture(text, null, color, 256, 64, "600 34px Figtree, sans-serif"), depthTest: true }));
+  s.scale.set(1.2, .3, 1); return s;
+}
+function person(color, name, tag) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(.24, .28, 1.2, 12), mat(color, .7)); body.position.y = .85; body.castShadow = !isTouch; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.17, 14, 10), mat(0xc99c7a, .6)); head.position.y = 1.62; g.add(head);
+  const l = label(name, tag || "#ffffff"); l.position.y = 2.05; g.add(l);
+  g.userData.body = body; return g;
+}
+function addInteract(mesh, obj) { mesh.userData.inter = obj; interactables.push(mesh); }
+
+function building(name, cx, cz, w, d, facesSouth, wall, signText) {
+  // facesSouth = porta voltada para -Z (lado norte da rua); senão porta para +Z
+  const H = 3.6, t = .2, door = 1.8, fz = facesSouth ? cz - d / 2 : cz + d / 2, bz = facesSouth ? cz + d / 2 : cz - d / 2;
+  box(cx, .02, cz, w, .04, d, 0x9a948a, false);
+  box(cx, H + .1, cz, w + .4, .2, d + .4, 0x3b3b40, false);
+  box(cx, H / 2, bz, w, H, t, wall); box(cx - w / 2, H / 2, cz, t, H, d, wall); box(cx + w / 2, H / 2, cz, t, H, d, wall);
+  const side = (w - door) / 2;
+  box(cx - w / 2 + side / 2, H / 2, fz, side, H, t, wall); box(cx + w / 2 - side / 2, H / 2, fz, side, H, t, wall);
+  box(cx, (H + 2.4) / 2, fz, door, H - 2.4, t, wall, false);
+  sign(signText, cx, H - .45, fz + (facesSouth ? -.13 : .13), facesSouth ? Math.PI : 0, Math.min(w - 1, 6));
+  const lamp = new THREE.PointLight(0xfff1d6, .8, Math.max(w, d) + 2); lamp.position.set(cx, H - .5, cz); scene.add(lamp);
+  return { fz, inward: facesSouth ? 1 : -1 };
+}
+function shelf(x, z, rotY, color) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rotY; scene.add(g);
+  box(0, 1, .2, 2, 2, .06, 0x6b4e33, false, g);
+  for (let l = 0; l < 4; l++) { box(0, .15 + l * .5, 0, 2, .04, .45, 0x6b4e33, false, g); for (let i = 0; i < 5; i++) box(-.8 + i * .4, .29 + l * .5, 0, .25, .2, .25, color, false, g); }
+  colliders.push({ minX: x - 1.1, maxX: x + 1.1, minZ: z - .35, maxZ: z + .35 });
+  return g;
+}
+function counter(x, z, inward, sup, shirt) {
+  const cz = z; box(x, .5, cz, 3.2, 1, .8, 0x5a4330); box(x, 1.03, cz, 3.3, .06, .9, 0xe6e2da, false);
+  const p = person(shirt, sup.clerk, "#f2b632"); p.position.set(x, 0, cz + inward * 1.0); p.rotation.y = inward > 0 ? Math.PI : 0; scene.add(p);
+  const hit = box(x, 1, cz, 3.4, 2, 1.2, 0x000000, false); hit.visible = false;
+  addInteract(hit, { prompt: () => `Falar com ${sup.clerk}`, act: () => openPanel(ShopPanel(S.suppliers[sup.id])) });
+  addInteract(p.userData.body, hit.userData.inter);
+}
+
+function buildWorld() {
+  scene = new THREE.Scene(); scene.background = new THREE.Color(0x8fb6d8); scene.fog = new THREE.Fog(0x8fb6d8, 40, 110);
+  camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .05, 200);
+  hemi = new THREE.HemisphereLight(0xcfe3ff, 0x5a4a3a, .7); scene.add(hemi);
+  sun = new THREE.DirectionalLight(0xfff4e0, 1.1); sun.position.set(-20, 40, 10); sun.castShadow = !isTouch;
+  Object.assign(sun.shadow.camera, { left: -50, right: 50, top: 50, bottom: -50 }); sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.02; scene.add(sun);
+
+  box(0, -.05, 0, 120, .1, 80, 0x4d7344, false);
+  box(0, 0, 0, 90, .02, 7, 0x2e2f33, false);
+  box(0, .06, 5, 90, .12, 3, 0x9a9a95, false); box(0, .06, -5, 90, .12, 3, 0x9a9a95, false);
+  for (let i = -10; i <= 10; i++) box(i * 4, .02, 0, 2, .01, .15, 0xf0d24a, false);
+  for (let i = -4; i <= 4; i++) for (const z of [6.2, -6.2]) {
+    box(i * 10 + 5, 2, z, .14, 4, .14, 0x333338);
+    const l = new THREE.PointLight(0xffd9a0, 0, 10); l.position.set(i * 10 + 5, 4.1, z); scene.add(l); lampLights.push(l);
+  }
+  colliders.push({ minX: -46, maxX: 46, minZ: 29.5, maxZ: 30.5 }, { minX: -46, maxX: 46, minZ: -30.5, maxZ: -29.5 }, { minX: 45.5, maxX: 46.5, minZ: -30, maxZ: 30 }, { minX: -46.5, maxX: -45.5, minZ: -30, maxZ: 30 });
+
+  const sup = S.suppliers;
+  building("eletro", -24, 12.5, 12, 12, true, 0xb7c4d6, "ELETRO CENTRO");
+  shelf(-28.5, 16, 0, 0x26262c); shelf(-19.5, 16, 0, 0x3a62c4);
+  counter(-24, 13, 1, sup.eletro_centro, 0x34598f);
+
+  building("acess", -8, 12.5, 12, 12, true, 0xe5cc9e, "CASA DOS ACESSORIOS");
+  shelf(-12.5, 16, 0, 0xd24c4c); shelf(-3.5, 16, 0, 0x4cb36a);
+  counter(-8, 13, 1, sup.casa_acessorios, 0xb34a59);
+
+  building("mestre", 8, 12.5, 10, 10, true, 0x8c8099, "MESTRE NEGOCIADOR");
+  box(8, .03, 12, 5, .01, 4, 0x7a2626, false);
+  box(8, .78, 14.1, 2.4, .08, 1.1, 0x4a3220); box(8, .38, 14.35, 2.3, .76, .5, 0x4a3220, false);
+  const mentor = person(0x1f2230, "Mestre Otávio", "#f2b632"); mentor.position.set(8, 0, 15.1); mentor.rotation.y = Math.PI; scene.add(mentor);
+  const mentorInter = { prompt: () => S.mentorPending.length ? `Falar com o Mestre (${S.mentorPending.length} para analisar)` : "Falar com o Mestre", act: () => openPanel(MentorPanel()) };
+  const deskHit = box(8, 1, 14.3, 2.6, 2, 1.6, 0, false); deskHit.visible = false; addInteract(deskHit, mentorInter); addInteract(mentor.userData.body, mentorInter);
+  shelf(4.5, 16.4, 0, 0x8a3030); shelf(11.5, 16.4, 0, 0xd9b233);
+
+  building("atacado", 25, 12.5, 14, 12, true, 0x9ea08c, "ATACADO BOM PRECO");
+  shelf(20, 16.4, 0, 0xb88f5c); shelf(30, 16.4, 0, 0xb88f5c);
+  counter(25, 13, 1, sup.atacado, 0x4b7a4b);
+  gateMesh = box(25, 1.2, 6.5, 1.8, 2.4, .12, 0x8a6a3a);
+  addInteract(gateMesh, { prompt: () => "Atacadista: disponível a partir do nível 6", act: () => toast("Atacadista: disponível a partir do nível 6") });
+
+  building("deposito", -16, -12.5, 12, 10, false, 0xbf8c66, "MEU DEPOSITO");
+  const st = shelf(-20, -16.6, Math.PI, 0xb88f5c);
+  const stHit = box(-20, 1, -16.2, 2.2, 2, .9, 0, false); stHit.visible = false;
+  addInteract(stHit, { prompt: () => "Abrir depósito", act: () => openPanel(InvPanel("warehouse")) });
+  box(-13.5, .92, -13, 2.4, .08, 1, 0x8c6b47); for (const dx of [-1.1, 1.1]) for (const dz of [-.42, .42]) box(-13.5 + dx, .45, -13 + dz, .08, .9, .08, 0x777777, false);
+  colliders.push({ minX: -14.8, maxX: -12.2, minZ: -13.55, maxZ: -12.45 });
+  box(-14.3, 1.06, -13.2, .3, .2, .25, 0xb88f5c, false); box(-13.8, 1.11, -13.25, .45, .3, .35, 0xb88f5c, false);
+  const bench = box(-13.5, 1.05, -13, 2.6, .5, 1.2, 0, false); bench.visible = false;
+  addInteract(bench, { prompt: () => "Usar bancada de embalagem", act: () => openPanel(BenchPanel()) });
+  for (let i = 0; i < 6; i++) box(-11.6 - (i % 2) * .7, .3 + Math.floor(i / 2) * .6, -16.6, .6, .6, .6, 0xb88f5c, i < 2);
+
+  // Praça
+  box(10, .03, -14, 20, .06, 14, 0xb3a999, false);
+  for (let i = 0; i < 4; i++) {
+    const x = 3 + i * 4.7; box(x, .45, -10, 1.8, .1, .5, 0x6b4a2e);
+    const tr = new THREE.Mesh(new THREE.CylinderGeometry(.15, .2, 2, 8), mat(0x5a4026)); tr.position.set(x, 1, -18); scene.add(tr);
+    const cp = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 10), mat(0x3d7a3a)); cp.position.set(x, 2.6, -18); cp.castShadow = !isTouch; scene.add(cp);
+    colliders.push({ minX: x - .25, maxX: x + .25, minZ: -18.25, maxZ: -17.75 });
+  }
+  sign("PRACA COMERCIAL", 10, 2.4, -20.8, 0, 5);
+
+  player = { pos: new THREE.Vector3(-16, 0, -4.5), yaw: Math.PI, pitch: 0, r: .3 };
+  scene.add(camera);
+}
+
+function resetWorld() {
+  customers.forEach(c => scene.remove(c.group)); customers = [];
+  if (S.player) { player.pos.set(S.player.x, 0, S.player.z); player.yaw = S.player.yaw; } else { player.pos.set(-16, 0, -4.5); player.yaw = Math.PI; }
+  refreshGates(); spawnT = 0;
+}
+function refreshGates() { if (!gateMesh) return; const open = level() >= 6; gateMesh.visible = !open; const c = colliders.find(c => c.mesh === gateMesh); if (c) c.off = open; const i = interactables.indexOf(gateMesh); if (open && i >= 0) interactables.splice(i, 1); }
+
+// ---- Clientes andando
+const NAMES = ["Rafael", "Juliana", "Marcos", "Patrícia", "Bruno", "Camila", "Diego", "Fernanda", "Gustavo", "Larissa", "Thiago", "Aline", "Rodrigo", "Beatriz", "Felipe", "Renata"];
+const WAY = []; for (let x = 0; x < 4; x++) for (let z = 0; z < 2; z++) WAY.push([3 + x * 4.5, -10.5 - z * 5]); for (let x = -6; x <= 38; x += 11) WAY.push([x, -5]);
+const SPAWNS = [[40, -5], [18, -19], [-6, -5]];
+let spawnT = 0, spawnCount = 0;
+const spawnRng = rng(1234);
+function spawnCustomer() {
+  const pool = NAMES.filter(n => !customers.some(c => c.name === n)); if (!pool.length) return;
+  const name = pool[Math.floor(spawnRng() * pool.length)];
+  const archs = Object.keys(ARCH), arch = archs[Math.floor(spawnRng() * archs.length)];
+  const want = PRODUCTS[Math.floor(spawnRng() * PRODUCTS.length)];
+  const brain = new Customer(name, arch, want.cat, want.ref, 1234 * 31 + spawnCount++);
+  brain.trust = clamp01(brain.trust + trustBonus(name) + (S.rep - 50) / 400);
+  const hue = (hash(name) % 360) / 360, color = new THREE.Color().setHSL(hue, .45, .5).getHex();
+  const g = person(color, name); const sp = SPAWNS[Math.floor(spawnRng() * SPAWNS.length)]; g.position.set(sp[0], 0, sp[1]); scene.add(g);
+  const ex = SPAWNS[Math.floor(spawnRng() * SPAWNS.length)];
+  const c = { name, brain, group: g, target: WAY[Math.floor(spawnRng() * WAY.length)], idle: 0, talking: false, leaving: false, exit: ex, phase: spawnRng() * 6 };
+  addInteract(g.userData.body, { prompt: () => c.brain.finished ? `${name} já está de saída` : `Conversar com ${name}`, can: () => !c.brain.finished && !c.leaving, act: () => { c.talking = true; openPanel(NegotiationPanel(c)); } });
+  customers.push(c);
+}
+function updateCustomers(dt) {
+  spawnT -= dt; const max = isTouch ? 4 : 6;
+  if (spawnT <= 0 && customers.length < max) { spawnCustomer(); spawnT = customers.length < 3 ? .5 : 8; }
+  for (const c of customers.slice()) {
+    const g = c.group;
+    if (c.talking) { const d = Math.atan2(player.pos.x - g.position.x, player.pos.z - g.position.z); g.rotation.y = d; continue; }
+    if (c.idle > 0) { c.idle -= dt; continue; }
+    const tx = c.leaving ? c.exit[0] : c.target[0], tz = c.leaving ? c.exit[1] : c.target[1];
+    const dx = tx - g.position.x, dz = tz - g.position.z, dist = Math.hypot(dx, dz);
+    if (dist < .3) {
+      if (c.leaving) { scene.remove(g); interactables.splice(interactables.indexOf(g.userData.body), 1); customers.splice(customers.indexOf(c), 1); continue; }
+      c.idle = 2 + spawnRng() * 5; c.target = WAY[Math.floor(spawnRng() * WAY.length)]; continue;
+    }
+    const step = Math.min(dist, 1.3 * dt); g.position.x += dx / dist * step; g.position.z += dz / dist * step; g.rotation.y = Math.atan2(dx, dz);
+    c.phase += dt * 8; g.userData.body.position.y = .85 + Math.abs(Math.sin(c.phase)) * .04;
+  }
+}
+
+// ---- Controles
+const keys = {}; let look = { x: 0, y: 0 }, moveTouch = { x: 0, y: 0 }, stickId = null, lookId = null, stickOrigin = null, lastLook = null;
+addEventListener("keydown", e => {
+  if (e.repeat) return; keys[e.code] = true;
+  if (e.code === "Escape" && panel && !panel.noClose) closePanel();
+  if (panel) return;
+  if (e.code === "KeyE") interact();
+  if (e.code === "Tab") { e.preventDefault(); openPanel(InvPanel()); }
+  if (e.code === "KeyF") openPanel(MainPanel());
+});
+addEventListener("keyup", e => { keys[e.code] = false; if (e.code === "Tab") e.preventDefault(); });
+function setupInput() {
+  const cv = renderer.domElement;
+  cv.addEventListener("click", () => { if (panel || isTouch) return; if (document.pointerLockElement !== cv) { try { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) {} } else interact(); });
+  addEventListener("mousemove", e => { if (document.pointerLockElement === cv && !panel) { look.x += e.movementX * .0025; look.y += e.movementY * .0025; } });
+  if (!isTouch) return;
+  $("touch").hidden = false;
+  $("tInteract").addEventListener("pointerdown", e => { e.stopPropagation(); if (!panel) interact(); });
+  $("tBag").addEventListener("pointerdown", e => { e.stopPropagation(); if (!panel) openPanel(InvPanel()); });
+  $("tPanel").addEventListener("pointerdown", e => { e.stopPropagation(); if (!panel) openPanel(MainPanel()); });
+  cv.addEventListener("pointerdown", e => {
+    if (panel) return;
+    if (e.clientX < innerWidth * .45 && stickId === null) { stickId = e.pointerId; stickOrigin = { x: e.clientX, y: e.clientY }; const s = $("stick"); s.hidden = false; s.style.left = e.clientX + "px"; s.style.top = e.clientY + "px"; }
+    else if (lookId === null) { lookId = e.pointerId; lastLook = { x: e.clientX, y: e.clientY }; }
+  });
+  addEventListener("pointermove", e => {
+    if (e.pointerId === stickId) { let dx = (e.clientX - stickOrigin.x) / 55, dy = (e.clientY - stickOrigin.y) / 55; const m = Math.hypot(dx, dy); if (m > 1) { dx /= m; dy /= m; } moveTouch = { x: dx, y: -dy }; $("stick").firstElementChild.style.transform = `translate(${dx * 34}px, ${dy * 34}px)`; }
+    if (e.pointerId === lookId) { look.x += (e.clientX - lastLook.x) * .005; look.y += (e.clientY - lastLook.y) * .005; lastLook = { x: e.clientX, y: e.clientY }; }
+  });
+  const up = e => { if (e.pointerId === stickId) { stickId = null; moveTouch = { x: 0, y: 0 }; $("stick").hidden = true; } if (e.pointerId === lookId) lookId = null; };
+  addEventListener("pointerup", up); addEventListener("pointercancel", up);
+}
+
+let current = null;
+function findTarget() {
+  ray.setFromCamera({ x: 0, y: 0 }, camera); ray.far = 2.8;
+  const hits = ray.intersectObjects(interactables, false);
+  for (const h of hits) { const it = h.object.userData.inter; if (it) return it; }
+  return null;
+}
+function interact() { if (current && (!current.can || current.can())) current.act(); }
+
+function collide(p) {
+  for (const c of colliders) {
+    if (c.off) continue;
+    const cx = Math.max(c.minX, Math.min(p.x, c.maxX)), cz = Math.max(c.minZ, Math.min(p.z, c.maxZ));
+    const dx = p.x - cx, dz = p.z - cz, d2 = dx * dx + dz * dz;
+    if (d2 < player.r * player.r) {
+      if (d2 > 1e-8) { const d = Math.sqrt(d2), push = player.r - d; p.x += dx / d * push; p.z += dz / d * push; }
+      else { const opts = [[c.minX - player.r - p.x, 0], [c.maxX + player.r - p.x, 0], [0, c.minZ - player.r - p.z], [0, c.maxZ + player.r - p.z]].sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1])); p.x += opts[0][0]; p.z += opts[0][1]; }
+    }
+  }
+}
+
+// ---- Loop
+let lastT = performance.now(), saveTimer = 0, hudTimer = 0;
+function tick(now) {
+  const dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
+  const paused = panel && (panel.noClose || panel.title().startsWith("Mestre"));
+  if (!paused) { S.minutes += dt * 2; if (S.minutes >= 22 * 60) endDay(); }
+  if (!panel) {
+    player.yaw -= look.x; player.pitch = Math.max(-1.35, Math.min(1.35, player.pitch - look.y));
+    const fw = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) + moveTouch.y;
+    const st = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + moveTouch.x;
+    const m = Math.min(1, Math.hypot(fw, st));
+    if (m > .05) {
+      // A câmera olha para -Z girada pelo yaw: frente = (-sen, -cos), direita = (cos, -sen).
+      const sp = (keys.ShiftLeft || Math.hypot(moveTouch.x, moveTouch.y) > .95 ? 5.8 : 3.2) * dt * m, len = Math.hypot(fw, st) || 1;
+      const f = fw / len, r = st / len, sy = Math.sin(player.yaw), cy = Math.cos(player.yaw);
+      player.pos.x += (-sy * f + cy * r) * sp; player.pos.z += (-cy * f - sy * r) * sp; collide(player.pos);
+    }
+  }
+  look.x = 0; look.y = 0;
+  camera.position.set(player.pos.x, 1.65, player.pos.z);
+  camera.rotation.set(player.pitch, player.yaw, 0, "YXZ");
+  updateCustomers(dt);
+
+  // Dia claro das 8h às ~18h30; depois escurece até as 22h.
+  const t = clamp01((S.minutes - 480) / (14 * 60)), day = t < .75 ? 1 : 1 - (t - .75) / .25 * .85;
+  sun.intensity = .3 + day * .9; hemi.intensity = .35 + day * .55;
+  sun.position.set(-30 + t * 60, 12 + Math.sin(t * Math.PI) * 30, 14);
+  const sky = new THREE.Color(0x24304f).lerp(new THREE.Color(0x9cc4e4), day);
+  scene.background.copy(sky); scene.fog.color.copy(sky);
+  lampLights.forEach(l => l.intensity = day < .8 ? .9 : 0);
+
+  current = panel ? null : findTarget();
+  const pr = $("prompt"), txt = current && (!current.can || current.can()) ? (isTouch ? "" : "[E] ") + current.prompt() : null;
+  pr.hidden = !txt; if (txt) pr.textContent = txt;
+  $("crosshair").hidden = !!panel;
+  hudTimer -= dt; if (hudTimer <= 0) { renderHud(); hudTimer = .25; }
+  saveTimer += dt; if (saveTimer > 20) { saveTimer = 0; save(); }
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+
+function start() {
+  S = newState();
+  renderer = new THREE.WebGLRenderer({ antialias: !isTouch, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 2)); renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.enabled = !isTouch; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  $("game").appendChild(renderer.domElement);
+  buildWorld(); resetWorld(); setupInput();
+  addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+  addEventListener("pagehide", save); document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
+  openPanel(StartPanel());
+  requestAnimationFrame(tick);
+}
+window.__dm = { get S() { return S; }, P, Customer, evaluate, evalPack, evaluateOffer, buy, finalizePack, completeSale, openPanel, closePanel, interact, get player() { return player; }, get customers() { return customers; } };
+if (typeof THREE === "undefined") { document.body.insertAdjacentHTML("beforeend", '<p style="position:fixed;inset:auto 16px 16px;background:#000;padding:12px">Não foi possível carregar o motor 3D. Verifique a conexão e recarregue a página.</p>'); }
+else start();
+</script>
+
+</body>
+</html>

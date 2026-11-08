@@ -155,6 +155,10 @@ public static class MentorEvaluator
         }
         eval.Grade = (float)Math.Round(total * 10f, 1);
 
+        // O mestre não aprova venda com prejuízo nem desconto excessivo, por melhor que tenha sido o atendimento.
+        if (r.SaleClosed && profit <= 0) eval.Grade = Math.Min(eval.Grade, 6.0f);
+        else if (r.SaleClosed && r.AgreedPriceCents < reference * 0.8) eval.Grade = Math.Min(eval.Grade, 6.5f);
+
         // Observações
         var obs = eval.Observations;
         if (asked == 0) obs.Add("Você não perguntou o que o cliente procurava.");
@@ -166,8 +170,11 @@ public static class MentorEvaluator
         if (pressured > 0) obs.Add("Pressionar o cliente costuma afastá-lo.");
         if (r.SaleClosed && r.AgreedPriceCents < reference * 0.8) obs.Add("Desconto excessivo: vendeu bem abaixo do preço de mercado.");
         if (r.SaleClosed && profit <= 0) obs.Add("A venda deu prejuízo depois de taxas e embalagem.");
-        if (r.SaleClosed && proposals.Count == 1 && r.AgreedPriceCents < reference * 0.9)
+        bool acceptedFirstOffer = r.SaleClosed && proposals.Count == 1 && proposals[0] == r.AgreedPriceCents;
+        if (acceptedFirstOffer && r.AgreedPriceCents < reference * 0.9)
             obs.Add("Oportunidade perdida: o cliente aceitou de primeira um preço baixo. Dava para pedir mais.");
+        if (Count(NegotiationEventType.AcceptedCounter) > 0 && r.AgreedPriceCents < reference * 0.8)
+            obs.Add("Você aceitou uma contraproposta muito baixa. Antes de aceitar, tente argumentar ou contrapropor.");
         if (counters > 0 && answered == 0) obs.Add("O cliente demonstrou dúvidas e elas não foram respondidas.");
         if (r.SaleClosed && !r.Packed) obs.Add("O produto foi entregue sem embalagem, com mais risco de avaria.");
         if (r.SaleClosed && r.Packed && r.PackagingScore < 0.6f) obs.Add("A embalagem foi fraca e pode gerar reclamação.");
