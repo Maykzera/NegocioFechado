@@ -166,7 +166,7 @@ public static class DealMasterSceneBuilder
                 }
                 else if (index++ % 4 != 3)
                 {
-                    var p = Person(assets.coworker, floor, seat.position, 0f, Color.HSVToRGB((index * 0.137f) % 1f, 0.45f, 0.7f), CoworkerName(index));
+                    var p = Person(CoworkerSlot(index), floor, seat.position, 0f, Color.HSVToRGB((index * 0.137f) % 1f, 0.45f, 0.7f), CoworkerName(index), true);
                     AddCoworker(p, index % 3 == 0 ? breakPoint : null);
                 }
             }
@@ -176,7 +176,14 @@ public static class DealMasterSceneBuilder
         {
             WorldKit.Box("TV", p, new Vector3(0, 2.1f, 0), new Vector3(2.4f, 1.4f, 0.08f), WorldKit.Mat("Tela", new Color(0.05f, 0.07f, 0.1f), 0.9f), false);
         });
-        var board = WorldKit.Sign("RANKING", tvRoot.transform, new Vector3(0, 2.1f, -0.06f), 0f, 0.03f, new Color(0.6f, 1f, 0.7f));
+        // A frente da TV é o +Z local: o placar fica sobre uma tela escura, à frente do modelo.
+        // Com modelo, os filhos herdam a origem (já a 2,1 m) e a escala da TV.
+        bool tvModel = assets.tv.prefab != null;
+        float tvScale = tvModel ? assets.tv.scale : 1f;
+        float tvY = tvModel ? 0f : 2.1f;
+        float tvFront = tvModel ? 0.24f : 0.045f;
+        WorldKit.Box("Tela do ranking", tvRoot.transform, new Vector3(0, tvY, tvFront), new Vector3(2.2f / tvScale, 1.3f / tvScale, 0.005f), WorldKit.Mat("Tela", new Color(0.05f, 0.07f, 0.1f), 0.9f), false);
+        var board = WorldKit.Sign("RANKING", tvRoot.transform, new Vector3(0, tvY, tvFront + 0.02f), 0f, 0.03f / tvScale, new Color(0.6f, 1f, 0.7f));
         board.anchor = TextAnchor.MiddleCenter;
         board.alignment = TextAlignment.Left;
         board.gameObject.AddComponent<RankingBoard>().Text = board;
@@ -254,7 +261,7 @@ public static class DealMasterSceneBuilder
 
         Place(assets.fridge, c, new Vector3(14.4f, 0, 0.6f), 270f, p =>
             WorldKit.Box("Geladeira", p, new Vector3(0, 0.9f, 0), new Vector3(0.75f, 1.8f, 0.7f), WorldKit.Mat("Geladeira", new Color(0.92f, 0.92f, 0.94f), 0.7f)));
-        Place(assets.meetingTable, c, new Vector3(12.2f, 0, 2.5f), 0f, p =>
+        Place(assets.breakTable, c, new Vector3(12.2f, 0, 2.5f), 0f, p =>
             WorldKit.Primitive(PrimitiveType.Cylinder, "Mesa redonda", p, new Vector3(0, 0.72f, 0), new Vector3(1.1f, 0.03f, 1.1f), WorldKit.Mat("Mesa copa", new Color(0.85f, 0.83f, 0.78f))));
         for (int i = 0; i < 3; i++)
         {
@@ -370,13 +377,93 @@ public static class DealMasterSceneBuilder
 
     private static string CoworkerName(int i) => CoworkerNames[i % CoworkerNames.Length];
 
-    private static GameObject Person(AssetSlot slot, Transform parent, Vector3 pos, float yaw, Color shirt, string name)
+    private static AssetSlot CoworkerSlot(int index)
+    {
+        var variants = assets.coworkerVariants;
+        if (variants == null || variants.Length == 0) return assets.coworker;
+        return new AssetSlot
+        {
+            prefab = variants[index % variants.Length],
+            scale = assets.coworker.scale,
+            yawOffset = assets.coworker.yawOffset,
+            heightOffset = assets.coworker.heightOffset
+        };
+    }
+
+    private static void Aim(Transform bone, Transform child, Vector3 worldDirection)
+    {
+        Vector3 current = (child.position - bone.position).normalized;
+        bone.rotation = Quaternion.FromToRotation(current, worldDirection.normalized) * bone.rotation;
+    }
+
+    /// <summary>Tira o modelo humanoide da pose em T: braços para baixo e, se pedido, sentado à mesa.</summary>
+    private static void PoseCharacter(Transform model, Transform root, bool sit)
+    {
+        var animator = model.GetComponent<Animator>();
+        if (animator == null || !animator.isHuman) return;
+        animator.enabled = false;
+
+        Transform B(HumanBodyBones b) => animator.GetBoneTransform(b);
+        Vector3 forward = root.forward, right = root.right, up = root.up;
+
+        void ArmsDown(HumanBodyBones upper, HumanBodyBones lower, HumanBodyBones hand, float side)
+        {
+            Aim(B(upper), B(lower), -up + right * side * 0.14f + forward * 0.04f);
+            Aim(B(lower), B(hand), -up + right * side * 0.06f + forward * 0.2f);
+        }
+        ArmsDown(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand, -1f);
+        ArmsDown(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, 1f);
+        if (!sit) return;
+
+        var boneIds = new[]
+        {
+            HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm,
+            HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot,
+            HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot
+        };
+        var bones = Array.ConvertAll(boneIds, id => B(id));
+        var standing = Array.ConvertAll(bones, b => b.localRotation);
+        var hips = B(HumanBodyBones.Hips);
+        Vector3 standingHips = hips.localPosition;
+
+        hips.position = root.position + up * 0.56f + forward * 0.13f;
+
+        void Leg(HumanBodyBones upper, HumanBodyBones lower, HumanBodyBones foot, float side)
+        {
+            var footRotation = B(foot).rotation;
+            Aim(B(upper), B(lower), forward - up * 0.08f + right * side * 0.08f);
+            Aim(B(lower), B(foot), -up + forward * 0.06f);
+            B(foot).rotation = footRotation;
+        }
+        Leg(HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot, -1f);
+        Leg(HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot, 1f);
+
+        void ArmToDesk(HumanBodyBones upper, HumanBodyBones lower, HumanBodyBones hand, float side)
+        {
+            Aim(B(upper), B(lower), -up * 0.85f + forward * 0.5f + right * side * 0.12f);
+            Aim(B(lower), B(hand), forward - up * 0.05f - right * side * 0.18f);
+        }
+        ArmToDesk(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand, -1f);
+        ArmToDesk(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand, 1f);
+
+        var seated = Array.ConvertAll(bones, b => b.localRotation);
+        model.gameObject.AddComponent<CharacterPoses>().Setup(hips, standingHips, hips.localPosition, bones, standing, seated);
+    }
+
+    private static GameObject Person(AssetSlot slot, Transform parent, Vector3 pos, float yaw, Color shirt, string name, bool sit = false)
     {
         var root = WorldKit.Empty(name, parent, pos, yaw);
         Transform body;
         if (slot != null && slot.prefab != null)
         {
             body = Place(slot, root.transform, Vector3.zero, 0f, null).transform;
+            // O colisor automático mediria a pose em T (2 m de largura).
+            foreach (var box in body.GetComponents<BoxCollider>()) UnityEngine.Object.DestroyImmediate(box);
+            PoseCharacter(body, root.transform, sit);
+            var capsule = root.AddComponent<CapsuleCollider>();
+            capsule.center = new Vector3(0f, 0.85f, sit ? 0.13f : 0f);
+            capsule.height = 1.7f;
+            capsule.radius = 0.25f;
         }
         else
         {

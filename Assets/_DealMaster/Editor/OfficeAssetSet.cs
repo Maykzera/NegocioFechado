@@ -35,6 +35,8 @@ public class OfficeAssetSet : ScriptableObject
 
     [Header("Pessoas")]
     public AssetSlot coworker = new AssetSlot();
+    [Tooltip("Opcional: um modelo por colega, na ordem dos nomes. Usa a escala do campo Coworker.")]
+    public GameObject[] coworkerVariants = new GameObject[0];
     public AssetSlot supervisor = new AssetSlot();
     public AssetSlot receptionist = new AssetSlot();
 
@@ -45,6 +47,7 @@ public class OfficeAssetSet : ScriptableObject
     public AssetSlot coffeeMachine = new AssetSlot();
     public AssetSlot fridge = new AssetSlot();
     public AssetSlot meetingTable = new AssetSlot();
+    public AssetSlot breakTable = new AssetSlot();
     public AssetSlot chair = new AssetSlot();
     public AssetSlot waterCooler = new AssetSlot();
     public AssetSlot printer = new AssetSlot();

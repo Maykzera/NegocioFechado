@@ -54,9 +54,3 @@ public class StartMenuPanel : IModalPanel
         if (GUI.Button(new Rect(area.x, area.yMax - 50, 200, 46), "Voltar", UIStyles.Button)) showHelp = false;
     }
 }
-
-/// <summary>Mostra a tela inicial ao abrir o jogo.</summary>
-public class StartMenu : MonoBehaviour
-{
-    private void Start() => GameUI.Open(new StartMenuPanel());
-}

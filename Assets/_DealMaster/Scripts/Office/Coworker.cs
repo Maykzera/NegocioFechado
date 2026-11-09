@@ -24,6 +24,7 @@ public class Coworker : MonoBehaviour
     private Vector3 seat;
     private float nextLine, hideAt, nextBreak, bob;
     private bool walking, returning;
+    private CharacterPoses poses;
 
     public Transform Body { get => body; set => body = value; }
     public TextMesh Bubble { get => bubble; set => bubble = value; }
@@ -32,6 +33,7 @@ public class Coworker : MonoBehaviour
     private void Start()
     {
         seat = transform.position;
+        poses = GetComponentInChildren<CharacterPoses>();
         nextLine = Time.time + Random.Range(3f, 15f);
         nextBreak = Time.time + Random.Range(60f, 180f);
         if (bubble != null) bubble.text = "";
@@ -59,6 +61,7 @@ public class Coworker : MonoBehaviour
         {
             walking = true;
             returning = false;
+            if (poses != null) poses.Apply(false);
             if (bubble != null) bubble.text = "";
         }
     }
@@ -70,7 +73,13 @@ public class Coworker : MonoBehaviour
         to.y = 0;
         if (to.magnitude < 0.2f)
         {
-            if (returning) { walking = false; nextBreak = Time.time + Random.Range(90f, 240f); transform.rotation = Quaternion.identity; }
+            if (returning)
+            {
+                walking = false;
+                nextBreak = Time.time + Random.Range(90f, 240f);
+                transform.rotation = Quaternion.identity;
+                if (poses != null) poses.Apply(true);
+            }
             else { returning = true; }
             return;
         }

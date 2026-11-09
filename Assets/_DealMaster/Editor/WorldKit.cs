@@ -33,6 +33,19 @@ public static class WorldKit
         if (mat.HasProperty("_Color")) mat.SetColor("_Color", color);
         if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
         if (mat.HasProperty("_Glossiness")) mat.SetFloat("_Glossiness", smoothness);
+        if (name.IndexOf("vidro", System.StringComparison.OrdinalIgnoreCase) >= 0 && mat.HasProperty("_Surface"))
+        {
+            // Vidro interno transparente (URP/Lit).
+            mat.SetFloat("_Surface", 1f);
+            mat.SetFloat("_Blend", 0f);
+            mat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_ZWrite", 0f);
+            mat.SetOverrideTag("RenderType", "Transparent");
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            mat.SetColor("_BaseColor", new Color(color.r, color.g, color.b, 0.25f));
+        }
         EditorUtility.SetDirty(mat);
         cache[name] = mat;
         return mat;
@@ -76,7 +89,8 @@ public static class WorldKit
 
     public static TextMesh Sign(string text, Transform parent, Vector3 localPos, float yaw, float size, Color color)
     {
-        var go = Empty("Placa: " + text, parent, localPos, yaw);
+        // O texto do TextMesh se lê olhando no sentido +Z dele; +180 faz o yaw indicar para onde a placa aponta.
+        var go = Empty("Placa: " + text, parent, localPos, yaw + 180f);
         var tm = go.AddComponent<TextMesh>();
         tm.text = text;
         tm.anchor = TextAnchor.MiddleCenter;
