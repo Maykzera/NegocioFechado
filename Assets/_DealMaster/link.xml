@@ -1,0 +1,7 @@
+<!-- Evita que o IL2CPP (Android) remova partes do SDK da Anthropic usadas por reflexão na leitura do JSON. -->
+<linker>
+  <assembly fullname="Anthropic" preserve="all" />
+  <assembly fullname="System.Text.Json" preserve="all" />
+  <assembly fullname="Microsoft.Extensions.AI.Abstractions" preserve="all" />
+  <assembly fullname="DealMaster" preserve="all" />
+</linker>
